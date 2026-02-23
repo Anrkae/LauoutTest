@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sidebar SVG Cut Professional</title>
+<title>Concave Sidebar</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
@@ -30,7 +30,6 @@ font-family:Inter;
 body{
 display:flex;
 background:var(--bg);
-overflow:hidden;
 }
 
 
@@ -51,50 +50,55 @@ position:relative;
 /* NAV */
 
 .nav{
-
-position:relative;
 margin-top:20px;
-
+position:relative;
 }
 
 
-/* ITEMS */
+/* ITEM */
 
 .item{
 
-padding:14px 20px;
+height:52px;
+
+display:flex;
+align-items:center;
+
+padding-left:20px;
+
+margin-left:10px;
+
+border-top-left-radius:12px;
+border-bottom-left-radius:12px;
 
 cursor:pointer;
 
 color:var(--text2);
 
-position:relative;
-
 z-index:2;
+position:relative;
 
 }
 
 .item.active{
 
+background:var(--bg);
+
 color:var(--primary);
-font-weight:500;
 
 }
 
 
-/* SVG CUT GLOBAL */
+/* SVG CUT */
 
 .cut{
 
 position:absolute;
 
-left:100%;
-top:0;
+right:0;
 
-width:100vw;
-height:48px;
-
-z-index:1;
+width:24px;
+height:52px;
 
 }
 
@@ -102,18 +106,14 @@ z-index:1;
 /* CONTENT */
 
 .content{
-
 flex:1;
 padding:40px;
-
 }
 
 .card{
-
 background:white;
 padding:20px;
 margin-bottom:10px;
-
 }
 
 </style>
@@ -126,30 +126,35 @@ margin-bottom:10px;
 
 <div class="nav">
 
-<!-- SVG único -->
-<svg class="cut" viewBox="0 0 300 48" preserveAspectRatio="none">
 
-<path id="cut-path"
-fill="var(--bg)"
-d="
-M0,0
-H300
-V48
-H0
-Q40,24 0,48
-Z
-"/>
+<!-- SVG RECORTE -->
+<svg class="cut" viewBox="0 0 24 52">
+
+<rect width="24" height="52" fill="var(--bg)"/>
+
+<circle cx="0" cy="0" r="12" fill="var(--sidebar)"/>
+
+<circle cx="0" cy="52" r="12" fill="var(--sidebar)"/>
 
 </svg>
 
 
-<div class="item active">Dashboard</div>
 
-<div class="item">Clientes</div>
+<div class="item active">
+Dashboard
+</div>
 
-<div class="item">Produtos</div>
+<div class="item">
+Clientes
+</div>
 
-<div class="item">Configurações</div>
+<div class="item">
+Produtos
+</div>
+
+<div class="item">
+Configurações
+</div>
 
 
 </div>
@@ -163,6 +168,7 @@ Z
 <h1>Dashboard</h1>
 
 <div class="card">Conteúdo</div>
+
 <div class="card">Conteúdo</div>
 
 </div>
@@ -178,9 +184,9 @@ const cut=document.querySelector(".cut")
 function moveCut(el){
 
 gsap.to(cut,{
-y:el.offsetTop,
-duration:.3,
-ease:"power2.out"
+top:el.offsetTop,
+duration:.35,
+ease:"power3.out"
 })
 
 }
