@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sidebar Linear Real</title>
+<title>Sidebar Vazado Real</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
@@ -14,15 +14,13 @@
 
 :root{
 
---bg:#f6f8fb;
 --sidebar:#ffffff;
+--bg:#f3f5f9;
 
 --text:#0f172a;
 --text2:#64748b;
 
 --primary:#635bff;
-
---border:#e5e7eb;
 
 }
 
@@ -35,44 +33,22 @@ font-family:Inter;
 
 body{
 
-background:var(--bg);
 display:flex;
+background:var(--bg);
 
 }
 
 
-/* SIDEBAR */
+/* SIDEBAR REAL */
 
 .sidebar{
 
-position:fixed;
-
-left:16px;
-top:16px;
-bottom:16px;
-
-width:240px;
+width:220px;
+height:100vh;
 
 background:var(--sidebar);
 
-border:1px solid var(--border);
-
-border-radius:14px;
-
-padding:8px;
-
-}
-
-
-/* logo */
-
-.logo{
-
-padding:12px;
-margin-bottom:10px;
-
-font-weight:600;
-font-size:15px;
+position:relative;
 
 }
 
@@ -80,6 +56,8 @@ font-size:15px;
 /* NAV */
 
 .nav{
+
+margin-top:20px;
 
 position:relative;
 
@@ -90,17 +68,11 @@ position:relative;
 
 .item{
 
-padding:10px 14px;
-
-border-radius:8px;
-
-cursor:pointer;
+padding:12px 20px;
 
 color:var(--text2);
 
-font-size:14px;
-
-margin-bottom:4px;
+cursor:pointer;
 
 position:relative;
 
@@ -115,49 +87,47 @@ color:var(--text);
 }
 
 
-/* ATIVO */
+/* ATIVO TEXTO */
 
 .item.active{
 
-color:var(--text);
+color:var(--primary);
 font-weight:500;
 
 }
 
 
-/* FUNDO VAZADO */
+/* RECORTE */
 
-.active-bg{
+.cut{
 
 position:absolute;
 
-left:0;
-width:100%;
-height:36px;
+right:-1px;
+
+width:20px;
+height:44px;
 
 background:var(--bg);
 
-border-radius:8px;
-
-z-index:1;
+border-top-left-radius:12px;
+border-bottom-left-radius:12px;
 
 }
 
 
-/* INDICADOR */
+/* LINHA */
 
 .indicator{
 
 position:absolute;
 
-left:-8px;
+right:0;
 
 width:3px;
-height:36px;
+height:44px;
 
 background:var(--primary);
-
-border-radius:4px;
 
 }
 
@@ -166,25 +136,20 @@ border-radius:4px;
 
 .content{
 
-margin-left:270px;
+flex:1;
 
 padding:40px;
 
-width:100%;
-
 }
+
 
 .card{
 
 background:white;
 
-border:1px solid var(--border);
-
-border-radius:12px;
-
 padding:20px;
 
-margin-bottom:16px;
+margin-bottom:10px;
 
 }
 
@@ -196,37 +161,30 @@ margin-bottom:16px;
 
 <div class="sidebar">
 
-<div class="logo">
-Dashboard
-</div>
-
-
 <div class="nav">
 
-<div class="active-bg"></div>
-
+<div class="cut"></div>
 <div class="indicator"></div>
 
 
 <div class="item active">
-Overview
+Dashboard
 </div>
 
 <div class="item">
-Customers
+Clientes
 </div>
 
 <div class="item">
-Products
+Produtos
 </div>
 
 <div class="item">
-Settings
+Configurações
 </div>
 
 
 </div>
-
 
 </div>
 
@@ -234,23 +192,15 @@ Settings
 
 <div class="content">
 
-<h1 style="margin-bottom:20px;">
-Overview
-</h1>
-
+<h1>Dashboard</h1>
 
 <div class="card">
-Receita total: R$ 45.390
+Conteúdo aqui
 </div>
 
 <div class="card">
-Usuários: 1.203
+Conteúdo aqui
 </div>
-
-<div class="card">
-Performance: 98%
-</div>
-
 
 </div>
 
@@ -258,22 +208,21 @@ Performance: 98%
 
 <script>
 
-
 const items=document.querySelectorAll(".item")
 
-const indicator=document.querySelector(".indicator")
+const cut=document.querySelector(".cut")
 
-const bg=document.querySelector(".active-bg")
+const indicator=document.querySelector(".indicator")
 
 
 function move(el){
 
-gsap.to(indicator,{
+gsap.to(cut,{
 y:el.offsetTop,
 duration:.25
 })
 
-gsap.to(bg,{
+gsap.to(indicator,{
 y:el.offsetTop,
 duration:.25
 })
@@ -285,8 +234,7 @@ items.forEach(item=>{
 
 item.onclick=()=>{
 
-document.querySelector(".active")
-.classList.remove("active")
+document.querySelector(".active").classList.remove("active")
 
 item.classList.add("active")
 
@@ -298,8 +246,6 @@ move(item)
 
 
 move(document.querySelector(".active"))
-
-
 
 </script>
 
