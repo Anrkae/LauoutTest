@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sidebar Vazado Real</title>
+<title>Sidebar SVG Cut Professional</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
@@ -13,15 +13,11 @@
 <style>
 
 :root{
-
 --sidebar:#ffffff;
 --bg:#f3f5f9;
-
+--primary:#635bff;
 --text:#0f172a;
 --text2:#64748b;
-
---primary:#635bff;
-
 }
 
 *{
@@ -32,18 +28,17 @@ font-family:Inter;
 }
 
 body{
-
 display:flex;
 background:var(--bg);
-
+overflow:hidden;
 }
 
 
-/* SIDEBAR REAL */
+/* SIDEBAR */
 
 .sidebar{
 
-width:220px;
+width:240px;
 height:100vh;
 
 background:var(--sidebar);
@@ -57,37 +52,27 @@ position:relative;
 
 .nav{
 
-margin-top:20px;
-
 position:relative;
+margin-top:20px;
 
 }
 
 
-/* ITEM */
+/* ITEMS */
 
 .item{
 
-padding:12px 20px;
-
-color:var(--text2);
+padding:14px 20px;
 
 cursor:pointer;
+
+color:var(--text2);
 
 position:relative;
 
 z-index:2;
 
 }
-
-.item:hover{
-
-color:var(--text);
-
-}
-
-
-/* ATIVO TEXTO */
 
 .item.active{
 
@@ -97,37 +82,19 @@ font-weight:500;
 }
 
 
-/* RECORTE */
+/* SVG CUT GLOBAL */
 
 .cut{
 
 position:absolute;
 
-right:-1px;
+left:100%;
+top:0;
 
-width:200px;
-height:44px;
+width:100vw;
+height:48px;
 
-background:var(--bg);
-
-border-top-left-radius:12px;
-border-bottom-left-radius:12px;
-
-}
-
-
-/* LINHA */
-
-.indicator{
-
-position:absolute;
-
-right:0;
-
-width:3px;
-height:44px;
-
-background:var(--primary);
+z-index:1;
 
 }
 
@@ -137,51 +104,52 @@ background:var(--primary);
 .content{
 
 flex:1;
-
 padding:40px;
 
 }
 
-
 .card{
 
 background:white;
-
 padding:20px;
-
 margin-bottom:10px;
 
 }
-
 
 </style>
 </head>
 <body>
 
 
+
 <div class="sidebar">
 
 <div class="nav">
 
-<div class="cut"></div>
-<div class="indicator"></div>
+<!-- SVG único -->
+<svg class="cut" viewBox="0 0 300 48" preserveAspectRatio="none">
+
+<path id="cut-path"
+fill="var(--bg)"
+d="
+M0,0
+H300
+V48
+H0
+Q40,24 0,48
+Z
+"/>
+
+</svg>
 
 
-<div class="item active">
-Dashboard
-</div>
+<div class="item active">Dashboard</div>
 
-<div class="item">
-Clientes
-</div>
+<div class="item">Clientes</div>
 
-<div class="item">
-Produtos
-</div>
+<div class="item">Produtos</div>
 
-<div class="item">
-Configurações
-</div>
+<div class="item">Configurações</div>
 
 
 </div>
@@ -194,13 +162,8 @@ Configurações
 
 <h1>Dashboard</h1>
 
-<div class="card">
-Conteúdo aqui
-</div>
-
-<div class="card">
-Conteúdo aqui
-</div>
+<div class="card">Conteúdo</div>
+<div class="card">Conteúdo</div>
 
 </div>
 
@@ -209,22 +172,15 @@ Conteúdo aqui
 <script>
 
 const items=document.querySelectorAll(".item")
-
 const cut=document.querySelector(".cut")
 
-const indicator=document.querySelector(".indicator")
 
-
-function move(el){
+function moveCut(el){
 
 gsap.to(cut,{
 y:el.offsetTop,
-duration:.25
-})
-
-gsap.to(indicator,{
-y:el.offsetTop,
-duration:.25
+duration:.3,
+ease:"power2.out"
 })
 
 }
@@ -238,14 +194,14 @@ document.querySelector(".active").classList.remove("active")
 
 item.classList.add("active")
 
-move(item)
+moveCut(item)
 
 }
 
 })
 
 
-move(document.querySelector(".active"))
+moveCut(document.querySelector(".active"))
 
 </script>
 
