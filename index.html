@@ -4,15 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dashboard Moderno</title>
+<title>Sidebar Linear Real</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
 <style>
-
-/* ===== BASE ===== */
 
 :root{
 
@@ -43,7 +41,7 @@ display:flex;
 }
 
 
-/* ===== SIDEBAR ===== */
+/* SIDEBAR */
 
 .sidebar{
 
@@ -61,7 +59,7 @@ border:1px solid var(--border);
 
 border-radius:14px;
 
-padding:12px;
+padding:8px;
 
 }
 
@@ -79,11 +77,20 @@ font-size:15px;
 }
 
 
-/* item */
+/* NAV */
+
+.nav{
+
+position:relative;
+
+}
+
+
+/* ITEM */
 
 .item{
 
-padding:10px 12px;
+padding:10px 14px;
 
 border-radius:8px;
 
@@ -97,39 +104,56 @@ margin-bottom:4px;
 
 position:relative;
 
-transition:.2s;
+z-index:2;
 
 }
 
-
-/* hover */
-
 .item:hover{
 
-background:#f1f5f9;
 color:var(--text);
 
 }
 
 
-/* active */
+/* ATIVO */
 
 .item.active{
 
 color:var(--text);
 font-weight:500;
+
 }
 
 
-/* indicator */
+/* FUNDO VAZADO */
+
+.active-bg{
+
+position:absolute;
+
+left:0;
+width:100%;
+height:36px;
+
+background:var(--bg);
+
+border-radius:8px;
+
+z-index:1;
+
+}
+
+
+/* INDICADOR */
 
 .indicator{
 
 position:absolute;
 
-left:0;
+left:-8px;
+
 width:3px;
-height:32px;
+height:36px;
 
 background:var(--primary);
 
@@ -138,7 +162,7 @@ border-radius:4px;
 }
 
 
-/* ===== CONTENT ===== */
+/* CONTENT */
 
 .content{
 
@@ -149,21 +173,6 @@ padding:40px;
 width:100%;
 
 }
-
-
-/* topbar */
-
-.topbar{
-
-font-size:24px;
-font-weight:600;
-
-margin-bottom:30px;
-
-}
-
-
-/* cards */
 
 .card{
 
@@ -176,18 +185,6 @@ border-radius:12px;
 padding:20px;
 
 margin-bottom:16px;
-
-transition:.2s;
-
-}
-
-
-.card:hover{
-
-box-shadow:
-0 4px 12px rgba(0,0,0,0.08);
-
-transform:translateY(-2px);
 
 }
 
@@ -204,16 +201,31 @@ Dashboard
 </div>
 
 
-<div class="item active">Overview</div>
+<div class="nav">
 
-<div class="item">Customers</div>
-
-<div class="item">Products</div>
-
-<div class="item">Settings</div>
-
+<div class="active-bg"></div>
 
 <div class="indicator"></div>
+
+
+<div class="item active">
+Overview
+</div>
+
+<div class="item">
+Customers
+</div>
+
+<div class="item">
+Products
+</div>
+
+<div class="item">
+Settings
+</div>
+
+
+</div>
 
 
 </div>
@@ -222,9 +234,9 @@ Dashboard
 
 <div class="content">
 
-<div class="topbar">
+<h1 style="margin-bottom:20px;">
 Overview
-</div>
+</h1>
 
 
 <div class="card">
@@ -232,7 +244,7 @@ Receita total: R$ 45.390
 </div>
 
 <div class="card">
-Novos usuários: 1.203
+Usuários: 1.203
 </div>
 
 <div class="card">
@@ -248,54 +260,45 @@ Performance: 98%
 
 
 const items=document.querySelectorAll(".item")
+
 const indicator=document.querySelector(".indicator")
 
-function moveIndicator(el){
+const bg=document.querySelector(".active-bg")
+
+
+function move(el){
 
 gsap.to(indicator,{
 y:el.offsetTop,
-duration:.3,
-ease:"power2.out"
+duration:.25
+})
+
+gsap.to(bg,{
+y:el.offsetTop,
+duration:.25
 })
 
 }
+
 
 items.forEach(item=>{
 
 item.onclick=()=>{
 
-document.querySelector(".active").classList.remove("active")
+document.querySelector(".active")
+.classList.remove("active")
 
 item.classList.add("active")
 
-moveIndicator(item)
+move(item)
 
 }
 
 })
 
-moveIndicator(document.querySelector(".active"))
 
+move(document.querySelector(".active"))
 
-
-/* entrada */
-
-gsap.from(".sidebar",{
-
-x:-30,
-opacity:0,
-duration:.6
-
-})
-
-gsap.from(".card",{
-
-y:20,
-opacity:0,
-duration:.6,
-stagger:.1
-
-})
 
 
 </script>
