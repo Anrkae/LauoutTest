@@ -4,36 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Modern Light Sidebar</title>
+<title>Dashboard Moderno</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
 <style>
 
-/* ========= ROOT ========= */
+/* ===== BASE ===== */
 
 :root{
 
---bg: #f4f7fb;
+--bg:#f6f8fb;
+--sidebar:#ffffff;
 
---sidebar: rgba(255,255,255,0.65);
+--text:#0f172a;
+--text2:#64748b;
 
---border: rgba(0,0,0,0.08);
+--primary:#635bff;
 
---primary: #6366f1;
-
---text: #111827;
-
---text2: #6b7280;
-
---hover: rgba(99,102,241,0.08);
+--border:#e5e7eb;
 
 }
-
-
-/* ========= BASE ========= */
 
 *{
 margin:0;
@@ -45,105 +38,111 @@ font-family:Inter;
 body{
 
 background:var(--bg);
-
 display:flex;
-
-height:100vh;
 
 }
 
 
-/* ========= SIDEBAR ========= */
+/* ===== SIDEBAR ===== */
 
 .sidebar{
 
 position:fixed;
 
-left:20px;
-top:20px;
-bottom:20px;
+left:16px;
+top:16px;
+bottom:16px;
 
 width:240px;
 
 background:var(--sidebar);
 
-backdrop-filter: blur(20px);
-
 border:1px solid var(--border);
 
-border-radius:20px;
+border-radius:14px;
 
-padding:20px;
-
-box-shadow:
-0 10px 30px rgba(0,0,0,0.05);
+padding:12px;
 
 }
 
 
-/* Logo */
+/* logo */
 
 .logo{
 
-font-weight:700;
+padding:12px;
+margin-bottom:10px;
 
-font-size:20px;
-
-margin-bottom:30px;
-
-color:var(--primary);
+font-weight:600;
+font-size:15px;
 
 }
 
 
-/* Menu */
+/* item */
 
-.menu-item{
+.item{
 
-padding:12px 15px;
+padding:10px 12px;
 
-border-radius:12px;
-
-margin-bottom:8px;
+border-radius:8px;
 
 cursor:pointer;
 
 color:var(--text2);
 
-transition:0.25s;
+font-size:14px;
 
-display:flex;
-align-items:center;
-gap:10px;
+margin-bottom:4px;
 
-}
+position:relative;
 
-
-.menu-item:hover{
-
-background:var(--hover);
-
-color:var(--primary);
-
-transform:translateX(5px);
+transition:.2s;
 
 }
 
 
-.menu-item.active{
+/* hover */
+
+.item:hover{
+
+background:#f1f5f9;
+color:var(--text);
+
+}
+
+
+/* active */
+
+.item.active{
+
+color:var(--text);
+font-weight:500;
+}
+
+
+/* indicator */
+
+.indicator{
+
+position:absolute;
+
+left:0;
+width:3px;
+height:32px;
 
 background:var(--primary);
 
-color:white;
+border-radius:4px;
 
 }
 
 
-/* ========= CONTENT ========= */
+/* ===== CONTENT ===== */
 
 .content{
 
-margin-left:280px;
+margin-left:270px;
 
 padding:40px;
 
@@ -152,88 +151,69 @@ width:100%;
 }
 
 
-/* Cards */
+/* topbar */
+
+.topbar{
+
+font-size:24px;
+font-weight:600;
+
+margin-bottom:30px;
+
+}
+
+
+/* cards */
 
 .card{
 
 background:white;
 
-padding:25px;
-
-border-radius:16px;
-
 border:1px solid var(--border);
-
-margin-bottom:20px;
-
-box-shadow:
-0 5px 15px rgba(0,0,0,0.04);
-
-cursor:pointer;
-
-}
-
-
-/* Hover animado */
-
-.card:hover{
-
-transform:translateY(-5px);
-
-}
-
-
-/* ========= BUTTON ========= */
-
-.toggle{
-
-position:fixed;
-
-top:20px;
-right:20px;
-
-background:white;
-
-border:1px solid var(--border);
-
-padding:12px;
 
 border-radius:12px;
 
-cursor:pointer;
+padding:20px;
+
+margin-bottom:16px;
+
+transition:.2s;
+
+}
+
+
+.card:hover{
+
+box-shadow:
+0 4px 12px rgba(0,0,0,0.08);
+
+transform:translateY(-2px);
 
 }
 
 
 </style>
-
 </head>
 <body>
-
 
 
 <div class="sidebar">
 
 <div class="logo">
-Barreto UI
+Dashboard
 </div>
 
 
-<div class="menu-item active">
-🏠 Dashboard
-</div>
+<div class="item active">Overview</div>
 
-<div class="menu-item">
-📊 Analytics
-</div>
+<div class="item">Customers</div>
 
-<div class="menu-item">
-📁 Projetos
-</div>
+<div class="item">Products</div>
 
-<div class="menu-item">
-⚙️ Config
-</div>
+<div class="item">Settings</div>
+
+
+<div class="indicator"></div>
 
 
 </div>
@@ -242,61 +222,45 @@ Barreto UI
 
 <div class="content">
 
-
-<h1 style="margin-bottom:20px;">
-Dashboard
-</h1>
-
-
-<div class="card">
-Card moderno com animação
+<div class="topbar">
+Overview
 </div>
 
 
 <div class="card">
-Interface limpa e profissional
+Receita total: R$ 45.390
 </div>
-
 
 <div class="card">
-Visual estilo SaaS premium
+Novos usuários: 1.203
+</div>
+
+<div class="card">
+Performance: 98%
 </div>
 
 
 </div>
-
 
 
 
 <script>
 
-/* ========= ANIMAÇÃO ENTRADA ========= */
 
-gsap.from(".sidebar",{
+const items=document.querySelectorAll(".item")
+const indicator=document.querySelector(".indicator")
 
-x:-100,
-opacity:0,
-duration:1,
-ease:"power3.out"
+function moveIndicator(el){
 
+gsap.to(indicator,{
+y:el.offsetTop,
+duration:.3,
+ease:"power2.out"
 })
 
+}
 
-gsap.from(".card",{
-
-y:50,
-opacity:0,
-duration:1,
-stagger:0.2,
-ease:"power3.out"
-
-})
-
-
-
-/* ========= ACTIVE ========= */
-
-document.querySelectorAll(".menu-item").forEach(item=>{
+items.forEach(item=>{
 
 item.onclick=()=>{
 
@@ -304,38 +268,37 @@ document.querySelector(".active").classList.remove("active")
 
 item.classList.add("active")
 
+moveIndicator(item)
+
 }
 
 })
 
+moveIndicator(document.querySelector(".active"))
 
-/* ========= HOVER ELÁSTICO ========= */
 
-document.querySelectorAll(".card").forEach(card=>{
 
-card.addEventListener("mouseenter",()=>{
+/* entrada */
 
-gsap.to(card,{
-scale:1.03,
-duration:0.3
-})
+gsap.from(".sidebar",{
 
-})
-
-card.addEventListener("mouseleave",()=>{
-
-gsap.to(card,{
-scale:1,
-duration:0.3
-})
+x:-30,
+opacity:0,
+duration:.6
 
 })
+
+gsap.from(".card",{
+
+y:20,
+opacity:0,
+duration:.6,
+stagger:.1
 
 })
 
 
 </script>
-
 
 
 </body>
