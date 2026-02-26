@@ -2,40 +2,54 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Painel Invisível</title>
+<title>Painel Flutter</title>
 </head>
 <body>
 
 <script>
-let popup = null;
+let pipWindow = null;
 
-// Abre popup
-function openPopup() {
-    if (!popup || popup.closed) {
-        popup = window.open("", "painel", "width=400,height=600");
+async function openFloatingPanel() {
 
-        if (popup) {
-            popup.document.write(`
-                <h2>Painel de Controle</h2>
-                <button onclick="window.close()">Fechar</button>
-            `);
-        }
+    if (!("documentPictureInPicture" in window)) {
+        alert("Seu navegador não suporta Document Picture-in-Picture.");
+        return;
     }
+
+    pipWindow = await window.documentPictureInPicture.requestWindow({
+        width: 300,
+        height: 200
+    });
+
+    pipWindow.document.body.innerHTML = `
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial;
+                background: #111;
+                color: white;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+            button {
+                padding: 10px;
+                margin-top: 10px;
+                cursor: pointer;
+            }
+        </style>
+
+        <h3>Painel de Ligações</h3>
+        <button onclick="window.close()">Fechar</button>
+    `;
 }
 
-// Fecha popup
-function closePopup() {
-    if (popup && !popup.closed) {
-        popup.close();
-    }
-}
-
-// Listener automático invertido
+// Listener automático ao sair da aba
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-        openPopup();   // Saiu da aba → abre
-    } else {
-        closePopup();  // Voltou → fecha
+        openFloatingPanel();
     }
 });
 </script>
