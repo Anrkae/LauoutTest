@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Teste Meet Style</title>
+<title>Teste Document PiP</title>
 <style>
 body{
   background:#0f172a;
@@ -24,12 +24,9 @@ button{
 </head>
 <body>
 
-<button id="start">Iniciar Painel</button>
+<button id="start">Abrir Painel</button>
 
-<!-- Vídeo REAL escondido -->
-<video id="video" autoplay muted loop playsinline style="display:none">
-  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-</video>
+<video id="video" autoplay muted playsinline style="display:none"></video>
 
 <script>
 const btn = document.getElementById("start");
@@ -37,10 +34,35 @@ const video = document.getElementById("video");
 
 btn.addEventListener("click", async () => {
 
-  await video.play(); // Força mídia ativa
+  // Criar canvas animado (vídeo falso)
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 360;
+  const ctx = canvas.getContext("2d");
+
+  let t = 0;
+  function draw(){
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle = "#22c55e";
+    ctx.font = "40px Arial";
+    ctx.fillText("Ligação Ativa", 180, 150);
+
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Tempo: " + Math.floor(t/60) + "s", 260, 200);
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  const stream = canvas.captureStream(30);
+  video.srcObject = stream;
 
   if (!("documentPictureInPicture" in window)) {
-    alert("API não suportada.");
+    alert("API não suportada nesse navegador.");
     return;
   }
 
@@ -49,54 +71,18 @@ btn.addEventListener("click", async () => {
     height: 240
   });
 
-  pipWindow.document.body.innerHTML = `
-    <style>
-      body{
-        margin:0;
-        background:#111827;
-        color:white;
-        font-family:Arial;
-        display:flex;
-        flex-direction:column;
-        height:100vh;
-      }
-      .header{
-        padding:8px;
-        background:#1f2937;
-        text-align:center;
-        font-weight:bold;
-      }
-      video{
-        width:100%;
-        flex:1;
-        background:black;
-      }
-      .controls{
-        display:flex;
-        justify-content:space-around;
-        padding:8px;
-        background:#1f2937;
-      }
-      button{
-        padding:6px 10px;
-        border:none;
-        border-radius:8px;
-        cursor:pointer;
-      }
-      .end{ background:#ef4444; color:white;}
-    </style>
+  // Move vídeo para janela flutuante
+  pipWindow.document.body.style.margin = "0";
+  pipWindow.document.body.style.background = "black";
+  video.style.display = "block";
+  video.style.width = "100%";
+  video.style.height = "100%";
 
-    <div class="header">Ligação Ativa</div>
-    <video id="pipVideo" autoplay muted loop>
-      <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-    </video>
-    <div class="controls">
-      <button class="end">Encerrar</button>
-    </div>
-  `;
+  pipWindow.document.body.appendChild(video);
 
-  pipWindow.document.querySelector(".end")
-    .addEventListener("click", () => pipWindow.close());
+  pipWindow.addEventListener("pagehide", () => {
+    document.body.appendChild(video);
+  });
 
 });
 </script>
