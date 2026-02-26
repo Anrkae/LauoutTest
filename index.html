@@ -3,214 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Concave Sidebar</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<title>Painel de Ligação</title>
 
 <style>
-
-:root{
---sidebar:#ffffff;
---bg:#f3f5f9;
---primary:#635bff;
---text:#0f172a;
---text2:#64748b;
-}
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Inter;
-}
-
 body{
-display:flex;
-background:var(--bg);
+  margin:0;
+  background:#0f172a;
+  font-family:Arial, sans-serif;
+  color:white;
 }
 
-
-/* SIDEBAR */
-
-.sidebar{
-
-width:240px;
-height:100vh;
-
-background:var(--sidebar);
-
-position:relative;
-
+/* Painel flutuante */
+.call-panel{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:260px;
+  background:#1e293b;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+  padding:15px;
+  z-index:9999;
+  cursor:grab;
+  transition:.3s;
 }
 
-
-/* NAV */
-
-.nav{
-margin-top:20px;
-position:relative;
+.call-panel.minimized{
+  height:50px;
+  overflow:hidden;
 }
 
-
-/* ITEM */
-
-.item{
-
-height:52px;
-
-display:flex;
-align-items:center;
-
-padding-left:20px;
-
-margin-left:10px;
-
-border-top-left-radius:12px;
-border-bottom-left-radius:12px;
-
-cursor:pointer;
-
-color:var(--text2);
-
-z-index:2;
-position:relative;
-
+.call-header{
+  font-weight:bold;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.item.active{
-
-background:var(--bg);
-
-color:var(--primary);
-
+.controls{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
 }
 
-
-/* SVG CUT */
-
-.cut{
-
-position:absolute;
-
-right:0;
-
-width:24px;
-height:52px;
-
+button{
+  flex:1;
+  margin:5px;
+  padding:8px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:.2s;
 }
 
+.mute{ background:#334155; color:white; }
+.end{ background:#ef4444; color:white; }
+.pip{ background:#22c55e; color:black; }
 
-/* CONTENT */
-
-.content{
-flex:1;
-padding:40px;
+button:hover{
+  transform:scale(1.05);
 }
-
-.card{
-background:white;
-padding:20px;
-margin-bottom:10px;
-}
-
 </style>
 </head>
 <body>
 
+<video id="video" width="1" height="1" autoplay muted loop style="display:none">
+  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+</video>
 
-
-<div class="sidebar">
-
-<div class="nav">
-
-
-<!-- SVG RECORTE -->
-<svg class="cut" viewBox="0 0 24 52">
-
-<rect width="24" height="52" fill="var(--bg)"/>
-
-<circle cx="0" cy="0" r="12" fill="var(--sidebar)"/>
-
-<circle cx="0" cy="52" r="12" fill="var(--sidebar)"/>
-
-</svg>
-
-
-
-<div class="item active">
-Dashboard
+<div class="call-panel" id="panel">
+  <div class="call-header">
+    Ligação Ativa
+    <span id="toggle">—</span>
+  </div>
+  <div class="controls">
+    <button class="mute" onclick="toggleMute()">Mute</button>
+    <button class="pip" onclick="ativarPiP()">PiP</button>
+    <button class="end" onclick="encerrar()">End</button>
+  </div>
 </div>
-
-<div class="item">
-Clientes
-</div>
-
-<div class="item">
-Produtos
-</div>
-
-<div class="item">
-Configurações
-</div>
-
-
-</div>
-
-</div>
-
-
-
-<div class="content">
-
-<h1>Dashboard</h1>
-
-<div class="card">Conteúdo</div>
-
-<div class="card">Conteúdo</div>
-
-</div>
-
-
 
 <script>
+const panel = document.getElementById("panel");
+const toggleBtn = document.getElementById("toggle");
+const video = document.getElementById("video");
 
-const items=document.querySelectorAll(".item")
-const cut=document.querySelector(".cut")
+/* Minimizar */
+toggleBtn.onclick = () => {
+  panel.classList.toggle("minimized");
+  toggleBtn.textContent = panel.classList.contains("minimized") ? "+" : "—";
+};
 
+/* Arrastar */
+let isDragging = false, offsetX, offsetY;
 
-function moveCut(el){
+panel.addEventListener("mousedown", e => {
+  isDragging = true;
+  offsetX = e.clientX - panel.getBoundingClientRect().left;
+  offsetY = e.clientY - panel.getBoundingClientRect().top;
+  panel.style.cursor = "grabbing";
+});
 
-gsap.to(cut,{
-top:el.offsetTop,
-duration:.35,
-ease:"power3.out"
-})
+document.addEventListener("mousemove", e => {
+  if(isDragging){
+    panel.style.left = e.clientX - offsetX + "px";
+    panel.style.top = e.clientY - offsetY + "px";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+  }
+});
 
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+  panel.style.cursor = "grab";
+});
+
+/* Funções */
+function toggleMute(){
+  alert("Microfone alternado (simulação)");
 }
 
-
-items.forEach(item=>{
-
-item.onclick=()=>{
-
-document.querySelector(".active").classList.remove("active")
-
-item.classList.add("active")
-
-moveCut(item)
-
+function encerrar(){
+  panel.style.display = "none";
+  alert("Ligação encerrada");
 }
 
-})
-
-
-moveCut(document.querySelector(".active"))
-
+async function ativarPiP(){
+  if(document.pictureInPictureEnabled){
+    await video.requestPictureInPicture();
+  } else {
+    alert("PiP não suportado nesse navegador.");
+  }
+}
 </script>
-
 
 </body>
 </html>
