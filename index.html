@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Ligação</title>
+<title>Teste Painel Flutuante</title>
 
 <style>
 body{
@@ -11,133 +11,108 @@ body{
   background:#0f172a;
   font-family:Arial, sans-serif;
   color:white;
-}
-
-/* Painel flutuante */
-.call-panel{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  width:260px;
-  background:#1e293b;
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  padding:15px;
-  z-index:9999;
-  cursor:grab;
-  transition:.3s;
-}
-
-.call-panel.minimized{
-  height:50px;
-  overflow:hidden;
-}
-
-.call-header{
-  font-weight:bold;
-  margin-bottom:10px;
   display:flex;
-  justify-content:space-between;
+  height:100vh;
+  justify-content:center;
   align-items:center;
 }
 
-.controls{
-  display:flex;
-  justify-content:space-between;
-  margin-top:10px;
-}
-
 button{
-  flex:1;
-  margin:5px;
-  padding:8px;
+  padding:12px 20px;
+  font-size:16px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
+  background:#22c55e;
+  color:black;
   font-weight:bold;
-  transition:.2s;
-}
-
-.mute{ background:#334155; color:white; }
-.end{ background:#ef4444; color:white; }
-.pip{ background:#22c55e; color:black; }
-
-button:hover{
-  transform:scale(1.05);
 }
 </style>
 </head>
 <body>
 
-<video id="video" width="1" height="1" autoplay muted loop style="display:none">
-  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-</video>
-
-<div class="call-panel" id="panel">
-  <div class="call-header">
-    Ligação Ativa
-    <span id="toggle">—</span>
-  </div>
-  <div class="controls">
-    <button class="mute" onclick="toggleMute()">Mute</button>
-    <button class="pip" onclick="ativarPiP()">PiP</button>
-    <button class="end" onclick="encerrar()">End</button>
-  </div>
-</div>
+<button id="abrir">Abrir Painel Flutuante</button>
 
 <script>
-const panel = document.getElementById("panel");
-const toggleBtn = document.getElementById("toggle");
-const video = document.getElementById("video");
+const btn = document.getElementById("abrir");
 
-/* Minimizar */
-toggleBtn.onclick = () => {
-  panel.classList.toggle("minimized");
-  toggleBtn.textContent = panel.classList.contains("minimized") ? "+" : "—";
-};
+btn.addEventListener("click", async () => {
 
-/* Arrastar */
-let isDragging = false, offsetX, offsetY;
-
-panel.addEventListener("mousedown", e => {
-  isDragging = true;
-  offsetX = e.clientX - panel.getBoundingClientRect().left;
-  offsetY = e.clientY - panel.getBoundingClientRect().top;
-  panel.style.cursor = "grabbing";
-});
-
-document.addEventListener("mousemove", e => {
-  if(isDragging){
-    panel.style.left = e.clientX - offsetX + "px";
-    panel.style.top = e.clientY - offsetY + "px";
-    panel.style.right = "auto";
-    panel.style.bottom = "auto";
+  if (!("documentPictureInPicture" in window)) {
+    alert("Seu navegador não suporta Document Picture-in-Picture.");
+    return;
   }
-});
 
-document.addEventListener("mouseup", () => {
-  isDragging = false;
-  panel.style.cursor = "grab";
-});
+  const pipWindow = await documentPictureInPicture.requestWindow({
+    width: 340,
+    height: 220
+  });
 
-/* Funções */
-function toggleMute(){
-  alert("Microfone alternado (simulação)");
-}
+  // Estrutura do painel
+  pipWindow.document.body.innerHTML = `
+    <style>
+      body{
+        margin:0;
+        background:#111827;
+        color:white;
+        font-family:Arial;
+        display:flex;
+        flex-direction:column;
+        height:100vh;
+      }
 
-function encerrar(){
-  panel.style.display = "none";
-  alert("Ligação encerrada");
-}
+      .header{
+        padding:10px;
+        background:#1f2937;
+        text-align:center;
+        font-weight:bold;
+      }
 
-async function ativarPiP(){
-  if(document.pictureInPictureEnabled){
-    await video.requestPictureInPicture();
-  } else {
-    alert("PiP não suportado nesse navegador.");
-  }
-}
-</script>
+      .video-area{
+        flex:1;
+        background:black;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        font-size:14px;
+        opacity:.8;
+      }
 
-</body>
-</html>
+      .controls{
+        display:flex;
+        justify-content:space-around;
+        padding:10px;
+        background:#1f2937;
+      }
+
+      button{
+        padding:8px 12px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        font-weight:bold;
+      }
+
+      .mute{ background:#374151; color:white; }
+      .chat{ background:#2563eb; color:white; }
+      .end{ background:#ef4444; color:white; }
+    </style>
+
+    <div class="header">Ligação Ativa</div>
+
+    <div class="video-area">
+      Vídeo da chamada
+    </div>
+
+    <div class="controls">
+      <button class="mute">Mute</button>
+      <button class="chat">Chat</button>
+      <button class="end">Encerrar</button>
+    </div>
+  `;
+
+  // Eventos dentro do PiP
+  const muteBtn = pipWindow.document.querySelector(".mute");
+  const endBtn = pipWindow.document.querySelector(".end");
+
+  muteBtn
