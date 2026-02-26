@@ -2,53 +2,53 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teste Painel Flutuante</title>
-
+<title>Teste Meet Style</title>
 <style>
 body{
-  margin:0;
   background:#0f172a;
-  font-family:Arial, sans-serif;
   color:white;
   display:flex;
-  height:100vh;
   justify-content:center;
   align-items:center;
+  height:100vh;
+  font-family:Arial;
 }
-
 button{
   padding:12px 20px;
-  font-size:16px;
   border:none;
   border-radius:12px;
   cursor:pointer;
-  background:#22c55e;
-  color:black;
   font-weight:bold;
 }
 </style>
 </head>
 <body>
 
-<button id="abrir">Abrir Painel Flutuante</button>
+<button id="start">Iniciar Painel</button>
+
+<!-- Vídeo REAL escondido -->
+<video id="video" autoplay muted loop playsinline style="display:none">
+  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+</video>
 
 <script>
-const btn = document.getElementById("abrir");
+const btn = document.getElementById("start");
+const video = document.getElementById("video");
 
 btn.addEventListener("click", async () => {
 
+  await video.play(); // Força mídia ativa
+
   if (!("documentPictureInPicture" in window)) {
-    alert("Seu navegador não suporta Document Picture-in-Picture.");
+    alert("API não suportada.");
     return;
   }
 
   const pipWindow = await documentPictureInPicture.requestWindow({
-    width: 340,
-    height: 220
+    width: 360,
+    height: 240
   });
 
-  // Estrutura do painel
   pipWindow.document.body.innerHTML = `
     <style>
       body{
@@ -60,59 +60,46 @@ btn.addEventListener("click", async () => {
         flex-direction:column;
         height:100vh;
       }
-
       .header{
-        padding:10px;
+        padding:8px;
         background:#1f2937;
         text-align:center;
         font-weight:bold;
       }
-
-      .video-area{
+      video{
+        width:100%;
         flex:1;
         background:black;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        font-size:14px;
-        opacity:.8;
       }
-
       .controls{
         display:flex;
         justify-content:space-around;
-        padding:10px;
+        padding:8px;
         background:#1f2937;
       }
-
       button{
-        padding:8px 12px;
+        padding:6px 10px;
         border:none;
-        border-radius:10px;
+        border-radius:8px;
         cursor:pointer;
-        font-weight:bold;
       }
-
-      .mute{ background:#374151; color:white; }
-      .chat{ background:#2563eb; color:white; }
-      .end{ background:#ef4444; color:white; }
+      .end{ background:#ef4444; color:white;}
     </style>
 
     <div class="header">Ligação Ativa</div>
-
-    <div class="video-area">
-      Vídeo da chamada
-    </div>
-
+    <video id="pipVideo" autoplay muted loop>
+      <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+    </video>
     <div class="controls">
-      <button class="mute">Mute</button>
-      <button class="chat">Chat</button>
       <button class="end">Encerrar</button>
     </div>
   `;
 
-  // Eventos dentro do PiP
-  const muteBtn = pipWindow.document.querySelector(".mute");
-  const endBtn = pipWindow.document.querySelector(".end");
+  pipWindow.document.querySelector(".end")
+    .addEventListener("click", () => pipWindow.close());
 
-  muteBtn
+});
+</script>
+
+</body>
+</html>
