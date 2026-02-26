@@ -8,17 +8,6 @@
 
 <script>
 let popup = null;
-let fakeStream = null;
-
-// Cria vídeo vazio
-function createSilentStream() {
-    const ctx = new AudioContext();
-    const oscillator = ctx.createOscillator();
-    const dst = oscillator.connect(ctx.createMediaStreamDestination());
-    oscillator.start();
-
-    fakeStream = dst.stream;
-}
 
 // Abre popup
 function openPopup() {
@@ -41,17 +30,14 @@ function closePopup() {
     }
 }
 
-// Listener automático de troca de aba
+// Listener automático invertido
 document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-        openPopup();
+    if (document.visibilityState === "hidden") {
+        openPopup();   // Saiu da aba → abre
     } else {
-        closePopup();
+        closePopup();  // Voltou → fecha
     }
 });
-
-// Inicializa stream silenciosa automaticamente
-createSilentStream();
 </script>
 
 </body>
