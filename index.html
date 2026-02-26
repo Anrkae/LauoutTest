@@ -2,90 +2,138 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Teste Document PiP</title>
+<title>Auto Document PiP</title>
+
 <style>
 body{
   background:#0f172a;
   color:white;
+  font-family:Arial;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
-  font-family:Arial;
+  margin:0;
 }
 button{
-  padding:12px 20px;
+  padding:14px 22px;
   border:none;
   border-radius:12px;
   cursor:pointer;
   font-weight:bold;
+  background:#22c55e;
+  color:black;
+  font-size:16px;
 }
 </style>
 </head>
 <body>
 
-<button id="start">Abrir Painel</button>
+<button id="start">Iniciar Sistema</button>
 
-<video id="video" autoplay muted playsinline style="display:none"></video>
+<!-- vídeo invisível 1x1 -->
+<video id="hiddenVideo" autoplay muted playsinline width="1" height="1" style="position:absolute;left:-9999px;"></video>
 
 <script>
+let pipWindow = null;
+let systemArmed = false;
+
 const btn = document.getElementById("start");
-const video = document.getElementById("video");
+const video = document.getElementById("hiddenVideo");
 
 btn.addEventListener("click", async () => {
 
-  // Criar canvas animado (vídeo falso)
+  // Criar canvas invisível 1x1
   const canvas = document.createElement("canvas");
-  canvas.width = 640;
-  canvas.height = 360;
+  canvas.width = 1;
+  canvas.height = 1;
+
   const ctx = canvas.getContext("2d");
 
-  let t = 0;
-  function draw(){
-    ctx.fillStyle = "#111827";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    ctx.fillStyle = "#22c55e";
-    ctx.font = "40px Arial";
-    ctx.fillText("Ligação Ativa", 180, 150);
-
-    ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
-    ctx.fillText("Tempo: " + Math.floor(t/60) + "s", 260, 200);
-
-    t++;
-    requestAnimationFrame(draw);
+  function keepAlive(){
+    ctx.fillRect(0,0,1,1);
+    requestAnimationFrame(keepAlive);
   }
-  draw();
+  keepAlive();
 
-  const stream = canvas.captureStream(30);
+  const stream = canvas.captureStream(1);
   video.srcObject = stream;
 
-  if (!("documentPictureInPicture" in window)) {
-    alert("API não suportada nesse navegador.");
-    return;
-  }
+  systemArmed = true;
+  btn.textContent = "Sistema Ativo";
 
-  const pipWindow = await documentPictureInPicture.requestWindow({
-    width: 360,
-    height: 240
+  alert("Agora troque de aba 😉");
+});
+
+async function openPiP(){
+
+  if (!systemArmed) return;
+  if (pipWindow) return;
+  if (!("documentPictureInPicture" in window)) return;
+
+  pipWindow = await documentPictureInPicture.requestWindow({
+    width: 320,
+    height: 200
   });
 
-  // Move vídeo para janela flutuante
-  pipWindow.document.body.style.margin = "0";
-  pipWindow.document.body.style.background = "black";
-  video.style.display = "block";
-  video.style.width = "100%";
-  video.style.height = "100%";
+  pipWindow.document.body.innerHTML = `
+    <style>
+      body{
+        margin:0;
+        background:#111827;
+        color:white;
+        font-family:Arial;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+      }
+      .status{
+        font-size:18px;
+        margin-bottom:15px;
+      }
+      .dot{
+        width:12px;
+        height:12px;
+        background:#22c55e;
+        border-radius:50%;
+        animation:pulse 1s infinite;
+      }
+      @keyframes pulse{
+        0%{opacity:1;}
+        50%{opacity:.3;}
+        100%{opacity:1;}
+      }
+    </style>
 
-  pipWindow.document.body.appendChild(video);
+    <div class="status">Ligação Ativa</div>
+    <div class="dot"></div>
+  `;
 
   pipWindow.addEventListener("pagehide", () => {
-    document.body.appendChild(video);
+    pipWindow = null;
   });
+}
 
+function closePiP(){
+  if (pipWindow){
+    pipWindow.close();
+    pipWindow = null;
+  }
+}
+
+// Detecta troca de aba
+document.addEventListener("visibilitychange", () => {
+
+  if (!systemArmed) return;
+
+  if (document.hidden){
+    openPiP();
+  } else {
+    closePiP();
+  }
 });
-</script>
 
+</script>
 </body>
 </html>
