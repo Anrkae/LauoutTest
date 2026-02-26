@@ -2,10 +2,10 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Auto Document PiP</title>
-
+<title>Auto Doc PiP</title>
 <style>
 body{
+  margin:0;
   background:#0f172a;
   color:white;
   font-family:Arial;
@@ -13,37 +13,27 @@ body{
   justify-content:center;
   align-items:center;
   height:100vh;
-  margin:0;
-}
-button{
-  padding:14px 22px;
-  border:none;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:bold;
-  background:#22c55e;
-  color:black;
-  font-size:16px;
 }
 </style>
 </head>
 <body>
 
-<button id="start">Iniciar Sistema</button>
+<h2>Troque de aba depois do primeiro clique 😉</h2>
 
-<!-- vídeo invisível 1x1 -->
-<video id="hiddenVideo" autoplay muted playsinline width="1" height="1" style="position:absolute;left:-9999px;"></video>
+<video id="hiddenVideo" autoplay muted playsinline width="1" height="1"
+style="position:absolute;left:-9999px;"></video>
 
 <script>
 let pipWindow = null;
-let systemArmed = false;
-
-const btn = document.getElementById("start");
+let armed = false;
 const video = document.getElementById("hiddenVideo");
 
-btn.addEventListener("click", async () => {
+/* ---------- 1️⃣ Ativa sistema no primeiro clique em qualquer lugar ---------- */
+document.addEventListener("pointerdown", async () => {
 
-  // Criar canvas invisível 1x1
+  if (armed) return;
+
+  // cria mídia invisível 1x1
   const canvas = document.createElement("canvas");
   canvas.width = 1;
   canvas.height = 1;
@@ -59,21 +49,22 @@ btn.addEventListener("click", async () => {
   const stream = canvas.captureStream(1);
   video.srcObject = stream;
 
-  systemArmed = true;
-  btn.textContent = "Sistema Ativo";
+  armed = true;
+  console.log("Sistema armado.");
+}, { once: true });
 
-  alert("Agora troque de aba 😉");
-});
 
+
+/* ---------- 2️⃣ Função abrir PiP ---------- */
 async function openPiP(){
 
-  if (!systemArmed) return;
+  if (!armed) return;
   if (pipWindow) return;
   if (!("documentPictureInPicture" in window)) return;
 
   pipWindow = await documentPictureInPicture.requestWindow({
-    width: 320,
-    height: 200
+    width: 300,
+    height: 180
   });
 
   pipWindow.document.body.innerHTML = `
@@ -84,30 +75,11 @@ async function openPiP(){
         color:white;
         font-family:Arial;
         display:flex;
-        flex-direction:column;
         justify-content:center;
         align-items:center;
       }
-      .status{
-        font-size:18px;
-        margin-bottom:15px;
-      }
-      .dot{
-        width:12px;
-        height:12px;
-        background:#22c55e;
-        border-radius:50%;
-        animation:pulse 1s infinite;
-      }
-      @keyframes pulse{
-        0%{opacity:1;}
-        50%{opacity:.3;}
-        100%{opacity:1;}
-      }
     </style>
-
-    <div class="status">Ligação Ativa</div>
-    <div class="dot"></div>
+    Ligação ativa
   `;
 
   pipWindow.addEventListener("pagehide", () => {
@@ -115,6 +87,9 @@ async function openPiP(){
   });
 }
 
+
+
+/* ---------- 3️⃣ Função fechar PiP ---------- */
 function closePiP(){
   if (pipWindow){
     pipWindow.close();
@@ -122,10 +97,12 @@ function closePiP(){
   }
 }
 
-// Detecta troca de aba
+
+
+/* ---------- 4️⃣ Listener automático troca de aba ---------- */
 document.addEventListener("visibilitychange", () => {
 
-  if (!systemArmed) return;
+  if (!armed) return;
 
   if (document.hidden){
     openPiP();
@@ -133,7 +110,7 @@ document.addEventListener("visibilitychange", () => {
     closePiP();
   }
 });
-
 </script>
+
 </body>
 </html>
