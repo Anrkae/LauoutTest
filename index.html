@@ -1,115 +1,57 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Auto Doc PiP</title>
-<style>
-body{
-  margin:0;
-  background:#0f172a;
-  color:white;
-  font-family:Arial;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-</style>
+<title>Painel Invisível</title>
 </head>
 <body>
 
-<h2>Troque de aba depois do primeiro clique 😉</h2>
-
-<video id="hiddenVideo" autoplay muted playsinline width="1" height="1"
-style="position:absolute;left:-9999px;"></video>
-
 <script>
-let pipWindow = null;
-let armed = false;
-const video = document.getElementById("hiddenVideo");
+let popup = null;
+let fakeStream = null;
 
-/* ---------- 1️⃣ Ativa sistema no primeiro clique em qualquer lugar ---------- */
-document.addEventListener("pointerdown", async () => {
+// Cria vídeo vazio
+function createSilentStream() {
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const dst = oscillator.connect(ctx.createMediaStreamDestination());
+    oscillator.start();
 
-  if (armed) return;
-
-  // cria mídia invisível 1x1
-  const canvas = document.createElement("canvas");
-  canvas.width = 1;
-  canvas.height = 1;
-
-  const ctx = canvas.getContext("2d");
-
-  function keepAlive(){
-    ctx.fillRect(0,0,1,1);
-    requestAnimationFrame(keepAlive);
-  }
-  keepAlive();
-
-  const stream = canvas.captureStream(1);
-  video.srcObject = stream;
-
-  armed = true;
-  console.log("Sistema armado.");
-}, { once: true });
-
-
-
-/* ---------- 2️⃣ Função abrir PiP ---------- */
-async function openPiP(){
-
-  if (!armed) return;
-  if (pipWindow) return;
-  if (!("documentPictureInPicture" in window)) return;
-
-  pipWindow = await documentPictureInPicture.requestWindow({
-    width: 300,
-    height: 180
-  });
-
-  pipWindow.document.body.innerHTML = `
-    <style>
-      body{
-        margin:0;
-        background:#111827;
-        color:white;
-        font-family:Arial;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-      }
-    </style>
-    Ligação ativa
-  `;
-
-  pipWindow.addEventListener("pagehide", () => {
-    pipWindow = null;
-  });
+    fakeStream = dst.stream;
 }
 
+// Abre popup
+function openPopup() {
+    if (!popup || popup.closed) {
+        popup = window.open("", "painel", "width=400,height=600");
 
-
-/* ---------- 3️⃣ Função fechar PiP ---------- */
-function closePiP(){
-  if (pipWindow){
-    pipWindow.close();
-    pipWindow = null;
-  }
+        if (popup) {
+            popup.document.write(`
+                <h2>Painel de Controle</h2>
+                <button onclick="window.close()">Fechar</button>
+            `);
+        }
+    }
 }
 
+// Fecha popup
+function closePopup() {
+    if (popup && !popup.closed) {
+        popup.close();
+    }
+}
 
-
-/* ---------- 4️⃣ Listener automático troca de aba ---------- */
+// Listener automático de troca de aba
 document.addEventListener("visibilitychange", () => {
-
-  if (!armed) return;
-
-  if (document.hidden){
-    openPiP();
-  } else {
-    closePiP();
-  }
+    if (document.visibilityState === "visible") {
+        openPopup();
+    } else {
+        closePopup();
+    }
 });
+
+// Inicializa stream silenciosa automaticamente
+createSilentStream();
 </script>
 
 </body>
