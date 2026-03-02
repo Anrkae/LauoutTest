@@ -16,9 +16,12 @@ async function openFloatingPanel() {
         return;
     }
 
+    // Evita abrir múltiplas janelas
+    if (pipWindow && !pipWindow.closed) return;
+
     pipWindow = await window.documentPictureInPicture.requestWindow({
-        width: 300,
-        height: 200
+        width: 320,
+        height: 240
     });
 
     pipWindow.document.body.innerHTML = `
@@ -34,16 +37,61 @@ async function openFloatingPanel() {
                 justify-content: center;
                 height: 100vh;
             }
+
+            h3 {
+                margin-bottom: 20px;
+            }
+
+            .buttons {
+                display: flex;
+                gap: 15px;
+            }
+
             button {
-                padding: 10px;
-                margin-top: 10px;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 8px;
                 cursor: pointer;
+                font-weight: bold;
+            }
+
+            .accept {
+                background: #28a745;
+                color: white;
+            }
+
+            .decline {
+                background: #dc3545;
+                color: white;
             }
         </style>
 
-        <h3>Painel de Ligações</h3>
-        <button onclick="window.close()">Fechar</button>
+        <h3>📞 Ligação Recebida</h3>
+
+        <div class="buttons">
+            <button class="accept" id="btnAccept">Atender</button>
+            <button class="decline" id="btnDecline">Desligar</button>
+        </div>
     `;
+
+    // Eventos dentro do PiP
+    pipWindow.document.getElementById("btnAccept")
+        .addEventListener("click", () => {
+            console.log("Ligação atendida");
+            // Aqui você pode chamar alguma função da página principal
+            pipWindow.close();
+        });
+
+    pipWindow.document.getElementById("btnDecline")
+        .addEventListener("click", () => {
+            console.log("Ligação recusada");
+            pipWindow.close();
+        });
+
+    // Quando fechar manualmente
+    pipWindow.addEventListener("pagehide", () => {
+        pipWindow = null;
+    });
 }
 
 // Listener automático ao sair da aba
