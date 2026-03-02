@@ -8,6 +8,15 @@
 
 <script>
 let pipWindow = null;
+let callInterval = null;
+let seconds = 0;
+let callStarted = false;
+
+function formatTime(sec) {
+    const min = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${min}:${s}`;
+}
 
 async function openFloatingPanel() {
 
@@ -16,12 +25,11 @@ async function openFloatingPanel() {
         return;
     }
 
-    // Evita abrir múltiplas janelas
     if (pipWindow && !pipWindow.closed) return;
 
     pipWindow = await window.documentPictureInPicture.requestWindow({
         width: 320,
-        height: 240
+        height: 260
     });
 
     pipWindow.document.body.innerHTML = `
@@ -39,7 +47,13 @@ async function openFloatingPanel() {
             }
 
             h3 {
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+            }
+
+            #timer {
+                font-size: 22px;
+                margin-bottom: 15px;
+                opacity: 0.8;
             }
 
             .buttons {
@@ -53,6 +67,7 @@ async function openFloatingPanel() {
                 border-radius: 8px;
                 cursor: pointer;
                 font-weight: bold;
+                min-width: 90px;
             }
 
             .accept {
@@ -66,7 +81,8 @@ async function openFloatingPanel() {
             }
         </style>
 
-        <h3>📞 Ligação Recebida</h3>
+        <h3 id="status">📞 Ligação Recebida</h3>
+        <div id="timer">00:00</div>
 
         <div class="buttons">
             <button class="accept" id="btnAccept">Atender</button>
@@ -74,27 +90,50 @@ async function openFloatingPanel() {
         </div>
     `;
 
-    // Eventos dentro do PiP
-    pipWindow.document.getElementById("btnAccept")
-        .addEventListener("click", () => {
-            console.log("Ligação atendida");
-            // Aqui você pode chamar alguma função da página principal
-            pipWindow.close();
-        });
+    const status = pipWindow.document.getElementById("status");
+    const timerEl = pipWindow.document.getElementById("timer");
+    const btnAccept = pipWindow.document.getElementById("btnAccept");
+    const btnDecline = pipWindow.document.getElementById("btnDecline");
 
-    pipWindow.document.getElementById("btnDecline")
-        .addEventListener("click", () => {
-            console.log("Ligação recusada");
-            pipWindow.close();
-        });
+    // BOTÃO ATENDER
+    btnAccept.addEventListener("click", () => {
+        if (callStarted) return;
 
-    // Quando fechar manualmente
+        callStarted = true;
+        status.textContent = "🟢 Em chamada";
+        btnAccept.style.display = "none"; // Esconde botão atender
+
+        seconds = 0;
+
+        callInterval = setInterval(() => {
+            seconds++;
+            timerEl.textContent = formatTime(seconds);
+        }, 1000);
+
+        console.log("Ligação iniciada");
+    });
+
+    // BOTÃO DESLIGAR
+    btnDecline.addEventListener("click", () => {
+        console.log("Ligação encerrada");
+
+        clearInterval(callInterval);
+        callInterval = null;
+        callStarted = false;
+
+        pipWindow.close();
+    });
+
+    // Reset ao fechar
     pipWindow.addEventListener("pagehide", () => {
+        clearInterval(callInterval);
+        callInterval = null;
+        callStarted = false;
         pipWindow = null;
     });
 }
 
-// Listener automático ao sair da aba
+// Abre automaticamente ao sair da aba
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
         openFloatingPanel();
