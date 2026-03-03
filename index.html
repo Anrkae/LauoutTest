@@ -2,55 +2,52 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Sistema Atendimento - Retenção</title>
+<title>Painel Retenção Moderno</title>
 
 <style>
 body {
-    font-family: Arial;
-    background: #f2f2f2;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#eef2f7,#dfe9f3);
     margin: 0;
-    padding: 20px;
+    padding: 30px;
 }
 
 .hidden { display: none; }
 
 .card {
     background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    max-width: 500px;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    max-width: 550px;
     margin: auto;
 }
 
-input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-}
+h2 { margin-top: 0; }
 
 button {
-    padding: 10px;
-    width: 100%;
-    cursor: pointer;
+    padding: 12px;
     border: none;
-    border-radius: 6px;
-    background: #007bff;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    background: #2563eb;
     color: white;
-    font-weight: bold;
+    transition: 0.2s;
 }
+
+button:hover { transform: translateY(-2px); }
 
 #historyList {
     margin-top: 20px;
 }
 
 .history-item {
-    background: #fff;
-    padding: 10px;
-    border-radius: 6px;
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 10px;
     margin-bottom: 8px;
     font-size: 14px;
-    border-left: 4px solid #007bff;
 }
 </style>
 </head>
@@ -58,9 +55,9 @@ button {
 
 <div id="loginScreen" class="card">
     <h2>Login</h2>
-    <input type="text" placeholder="Usuário">
-    <input type="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
+    <input placeholder="Usuário" style="width:100%;padding:10px;margin-bottom:10px;">
+    <input placeholder="Senha" type="password" style="width:100%;padding:10px;margin-bottom:15px;">
+    <button onclick="login()" style="width:100%;">Entrar</button>
 </div>
 
 <div id="dashboard" class="hidden">
@@ -77,17 +74,20 @@ button {
 let pipWindow = null;
 let callInterval = null;
 let seconds = 0;
-let callState = "disponivel"; 
+let callState = "disponivel";
 let history = [];
 
-/* ================= LOGIN ================= */
+let selectedResult = null;
+let selectedReason = null;
+
+/* LOGIN */
 
 function login() {
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
 }
 
-/* ================= HISTÓRICO ================= */
+/* HISTÓRICO */
 
 function renderHistory() {
     const list = document.getElementById("historyList");
@@ -96,26 +96,24 @@ function renderHistory() {
     history.forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
-        div.textContent =
-            `Data: ${item.date} | Duração: ${item.duration} | Resultado: ${item.result} | Motivo: ${item.reason}`;
+        div.innerHTML =
+            `<strong>${item.result}</strong> | ${item.reason} <br>
+             ⏱ ${item.duration} | 📅 ${item.date}`;
         list.appendChild(div);
     });
 }
 
 function addToHistory(duration, result, reason) {
-    const now = new Date();
-
     history.unshift({
-        date: now.toLocaleString(),
+        date: new Date().toLocaleString(),
         duration,
         result,
         reason
     });
-
     renderHistory();
 }
 
-/* ================= TIMER ================= */
+/* TIMER */
 
 function formatTime(sec) {
     const min = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -123,7 +121,7 @@ function formatTime(sec) {
     return `${min}:${s}`;
 }
 
-/* ================= FLOATING PANEL ================= */
+/* FLOATING PANEL */
 
 async function openFloatingPanel() {
 
@@ -135,8 +133,8 @@ async function openFloatingPanel() {
     if (pipWindow && !pipWindow.closed) return;
 
     pipWindow = await window.documentPictureInPicture.requestWindow({
-        width: 320,
-        height: 300
+        width: 340,
+        height: 420
     });
 
     updatePanelUI();
@@ -150,63 +148,112 @@ function updatePanelUI() {
 
     if (callState === "disponivel") {
         content = `
-            <h3>🟢 Disponível</h3>
-            <button id="startBtn" class="green">Atender</button>
+            <div class="status disponivel">Disponível</div>
+            <button class="primary" id="startBtn">Atender</button>
         `;
     }
 
     if (callState === "atendendo") {
         content = `
-            <h3>🔵 Atendendo</h3>
-            <div id="timer">${formatTime(seconds)}</div>
-            <button id="endBtn" class="red">Encerrar</button>
+            <div class="status atendendo">Atendendo</div>
+            <div class="timer">${formatTime(seconds)}</div>
+            <button class="danger" id="endBtn">Encerrar</button>
         `;
     }
 
     if (callState === "acw") {
         content = `
-            <h3>🟣 ACW</h3>
+            <div class="status acw">ACW</div>
 
-            <select id="resultSelect">
-                <option value="">Selecione resultado</option>
-                <option value="Retido">Retido</option>
-                <option value="Cancelado">Cancelado</option>
-            </select>
+            <div class="block-group" id="resultGroup">
+                <div class="block" data-value="Retido">Retido</div>
+                <div class="block cancel" data-value="Cancelado">Cancelado</div>
+            </div>
 
-            <div id="cancelReasonsContainer"></div>
+            <div class="block-group hidden" id="reasonGroup">
+                <div class="block" data-value="Atendimento">Atendimento</div>
+                <div class="block" data-value="Produto">Produto</div>
+                <div class="block" data-value="Técnico">Técnico</div>
+                <div class="block" data-value="Mudança de endereço">Mudança</div>
+                <div class="block special" data-value="021">021</div>
+            </div>
 
-            <button id="confirmBtn" class="green">Confirmar</button>
+            <button class="primary hidden" id="confirmBtn">Confirmar</button>
         `;
     }
 
     pipWindow.document.body.innerHTML = `
         <style>
             body {
-                margin: 0;
-                font-family: Arial;
-                background: #111;
-                color: white;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-                height: 100vh;
+                margin:0;
+                padding:20px;
+                font-family:'Segoe UI',sans-serif;
+                background:#0f172a;
+                color:white;
+                display:flex;
+                flex-direction:column;
+                gap:15px;
             }
 
-            button, select {
-                padding: 10px;
-                border: none;
-                border-radius: 8px;
-                width: 180px;
-                font-weight: bold;
-                cursor: pointer;
+            .status {
+                font-size:20px;
+                font-weight:600;
             }
 
-            .green { background: #28a745; color: white; }
-            .red { background: #dc3545; color: white; }
+            .disponivel { color:#22c55e; }
+            .atendendo { color:#3b82f6; }
+            .acw { color:#a855f7; }
 
-            #timer { font-size: 22px; }
+            .timer {
+                font-size:32px;
+                font-weight:700;
+            }
+
+            button {
+                padding:12px;
+                border:none;
+                border-radius:12px;
+                font-weight:600;
+                cursor:pointer;
+            }
+
+            .primary { background:#2563eb; color:white; }
+            .danger { background:#dc2626; color:white; }
+
+            .block-group {
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:10px;
+            }
+
+            .block {
+                background:#1e293b;
+                padding:12px;
+                border-radius:12px;
+                text-align:center;
+                cursor:pointer;
+                transition:0.2s;
+                border:2px solid transparent;
+            }
+
+            .block:hover { transform:scale(1.05); }
+
+            .block.active {
+                border-color:#3b82f6;
+                background:#1d4ed8;
+            }
+
+            .block.cancel.active {
+                border-color:#ef4444;
+                background:#7f1d1d;
+            }
+
+            .block.special {
+                grid-column: span 2;
+                background:#3f3f46;
+            }
+
+            .hidden { display:none; }
         </style>
 
         ${content}
@@ -220,47 +267,57 @@ function bindEvents() {
     if (!pipWindow) return;
 
     if (callState === "disponivel") {
-        pipWindow.document
-            .getElementById("startBtn")
+        pipWindow.document.getElementById("startBtn")
             .addEventListener("click", startCall);
     }
 
     if (callState === "atendendo") {
-        pipWindow.document
-            .getElementById("endBtn")
+        pipWindow.document.getElementById("endBtn")
             .addEventListener("click", goToACW);
     }
 
     if (callState === "acw") {
 
-        const resultSelect = pipWindow.document.getElementById("resultSelect");
-        const cancelContainer = pipWindow.document.getElementById("cancelReasonsContainer");
+        const resultBlocks = pipWindow.document.querySelectorAll("#resultGroup .block");
+        const reasonGroup = pipWindow.document.getElementById("reasonGroup");
+        const confirmBtn = pipWindow.document.getElementById("confirmBtn");
 
-        resultSelect.addEventListener("change", () => {
+        resultBlocks.forEach(block => {
+            block.addEventListener("click", () => {
 
-            if (resultSelect.value === "Cancelado") {
+                resultBlocks.forEach(b => b.classList.remove("active"));
+                block.classList.add("active");
 
-                cancelContainer.innerHTML = `
-                    <select id="cancelReason">
-                        <option value="Atendimento">Atendimento</option>
-                        <option value="Produto">Produto</option>
-                        <option value="Técnico">Técnico</option>
-                        <option value="Mudança de endereço">Mudança de endereço</option>
-                        <option value="021">021</option>
-                    </select>
-                `;
-            } else {
-                cancelContainer.innerHTML = "";
-            }
+                selectedResult = block.dataset.value;
+                selectedReason = null;
+
+                if (selectedResult === "Cancelado") {
+                    reasonGroup.classList.remove("hidden");
+                } else {
+                    reasonGroup.classList.add("hidden");
+                    confirmBtn.classList.remove("hidden");
+                }
+            });
         });
 
-        pipWindow.document
-            .getElementById("confirmBtn")
-            .addEventListener("click", finalizeCall);
+        pipWindow.document.querySelectorAll("#reasonGroup .block")
+            .forEach(block => {
+                block.addEventListener("click", () => {
+                    pipWindow.document
+                        .querySelectorAll("#reasonGroup .block")
+                        .forEach(b => b.classList.remove("active"));
+
+                    block.classList.add("active");
+                    selectedReason = block.dataset.value;
+                    confirmBtn.classList.remove("hidden");
+                });
+            });
+
+        confirmBtn.addEventListener("click", finalizeCall);
     }
 }
 
-/* ================= CALL FLOW ================= */
+/* CALL FLOW */
 
 function startCall() {
     callState = "atendendo";
@@ -268,9 +325,7 @@ function startCall() {
 
     callInterval = setInterval(() => {
         seconds++;
-        if (callState === "atendendo") {
-            updatePanelUI();
-        }
+        if (callState === "atendendo") updatePanelUI();
     }, 1000);
 
     updatePanelUI();
@@ -284,31 +339,25 @@ function goToACW() {
 
 function finalizeCall() {
 
-    const result = pipWindow.document.getElementById("resultSelect").value;
+    if (!selectedResult) return;
 
-    if (!result) {
-        alert("Selecione o resultado.");
-        return;
-    }
-
-    let reason = "-";
-
-    if (result === "Cancelado") {
-        const reasonSelect = pipWindow.document.getElementById("cancelReason");
-        reason = reasonSelect ? reasonSelect.value : "-";
-    }
+    if (selectedResult === "Cancelado" && !selectedReason) return;
 
     const duration = formatTime(seconds);
 
-    addToHistory(duration, result, reason);
+    addToHistory(
+        duration,
+        selectedResult,
+        selectedResult === "Retido" ? "-" : selectedReason
+    );
 
     seconds = 0;
+    selectedResult = null;
+    selectedReason = null;
     callState = "disponivel";
 
     updatePanelUI();
 }
-
-/* ================= AUTO OPEN ================= */
 
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
