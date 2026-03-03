@@ -2,11 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Painel Atendimento</title>
+<title>Sistema de Atendimento</title>
+
 <style>
 body {
     font-family: Arial;
-    background: #f4f4f4;
+    background: #f2f2f2;
     margin: 0;
     padding: 20px;
 }
@@ -17,8 +18,8 @@ body {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 500px;
     margin: auto;
 }
 
@@ -32,7 +33,14 @@ button {
     padding: 10px;
     width: 100%;
     cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
 }
+
+button:hover { opacity: 0.9; }
 
 #historyList {
     margin-top: 20px;
@@ -44,6 +52,7 @@ button {
     border-radius: 6px;
     margin-bottom: 8px;
     font-size: 14px;
+    border-left: 4px solid #007bff;
 }
 </style>
 </head>
@@ -72,9 +81,7 @@ button {
 let pipWindow = null;
 let callInterval = null;
 let seconds = 0;
-let callStartTime = null;
-
-let callState = "disponivel"; // disponivel | atendendo
+let callState = "disponivel";
 let history = [];
 
 /* ================= LOGIN ================= */
@@ -93,17 +100,20 @@ function renderHistory() {
     history.forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
-        div.textContent = `Data: ${item.date} | Duração: ${item.duration}`;
+        div.textContent = `Data: ${item.date} | Duração: ${item.duration} | Motivo: ${item.reason}`;
         list.appendChild(div);
     });
 }
 
-function addToHistory(duration) {
+function addToHistory(duration, reason) {
     const now = new Date();
+
     history.unshift({
         date: now.toLocaleString(),
-        duration: duration
+        duration: duration,
+        reason: reason
     });
+
     renderHistory();
 }
 
@@ -128,7 +138,7 @@ async function openFloatingPanel() {
 
     pipWindow = await window.documentPictureInPicture.requestWindow({
         width: 320,
-        height: 240
+        height: 260
     });
 
     updatePanelUI();
@@ -153,7 +163,7 @@ function updatePanelUI() {
             }
 
             #timer {
-                font-size: 20px;
+                font-size: 22px;
                 margin: 10px 0;
             }
 
@@ -163,18 +173,45 @@ function updatePanelUI() {
                 border: none;
                 border-radius: 8px;
                 cursor: pointer;
-                width: 120px;
+                width: 150px;
+                font-weight: bold;
             }
 
             .green { background: #28a745; color: white; }
             .red { background: #dc3545; color: white; }
+
+            .modal {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-content {
+                background: #222;
+                padding: 15px;
+                border-radius: 8px;
+                text-align: center;
+                width: 220px;
+            }
+
+            select {
+                width: 100%;
+                padding: 6px;
+                margin: 10px 0;
+            }
         </style>
 
         <h3>${callState === "disponivel" ? "🟢 Disponível" : "🔵 Atendendo"}</h3>
         <div id="timer">${callState === "atendendo" ? formatTime(seconds) : ""}</div>
+
         <button id="mainBtn" class="${callState === "disponivel" ? "green" : "red"}">
             ${callState === "disponivel" ? "Atender" : "Desligar"}
         </button>
+
+        <div id="modalContainer"></div>
     `;
 
     const mainBtn = pipWindow.document.getElementById("mainBtn");
@@ -183,7 +220,7 @@ function updatePanelUI() {
         if (callState === "disponivel") {
             startCall();
         } else {
-            endCall();
+            openCancelModal();
         }
     });
 }
@@ -193,22 +230,53 @@ function updatePanelUI() {
 function startCall() {
     callState = "atendendo";
     seconds = 0;
-    callStartTime = new Date();
 
     callInterval = setInterval(() => {
         seconds++;
-        updatePanelUI();
+        if (callState === "atendendo") {
+            updatePanelUI();
+        }
     }, 1000);
 
     updatePanelUI();
 }
 
-function endCall() {
+function openCancelModal() {
+
+    const modalContainer = pipWindow.document.getElementById("modalContainer");
+
+    modalContainer.innerHTML = `
+        <div class="modal">
+            <div class="modal-content">
+                <h4>Motivo do encerramento</h4>
+
+                <select id="cancelReason">
+                    <option value="Cliente desligou">Cliente desligou</option>
+                    <option value="Queda de conexão">Queda de conexão</option>
+                    <option value="Resolvido">Resolvido</option>
+                    <option value="Engano">Engano</option>
+                </select>
+
+                <button id="confirmCancel" class="red">Confirmar</button>
+            </div>
+        </div>
+    `;
+
+    pipWindow.document
+        .getElementById("confirmCancel")
+        .addEventListener("click", () => {
+            const reason = pipWindow.document.getElementById("cancelReason").value;
+            endCall(reason);
+        });
+}
+
+function endCall(reason) {
+
     clearInterval(callInterval);
 
     const duration = formatTime(seconds);
 
-    addToHistory(duration);
+    addToHistory(duration, reason);
 
     callState = "disponivel";
     seconds = 0;
