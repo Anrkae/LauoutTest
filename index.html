@@ -1,347 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>Painel Retenção</title>
 
 <style>
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-    padding: 30px;
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    margin:0;
+    padding:20px;
 }
 
-.hidden { display: none; }
-
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 14px;
-    max-width: 500px;
-    margin: auto;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+/* LOGIN */
+#loginScreen{
+    max-width:300px;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
 }
-
-h2 {
-    margin-top: 0;
-    font-weight: 600;
+input{
+    padding:8px;
+    border:1px solid #ccc;
+    border-radius:6px;
 }
-
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
+button{
+    padding:8px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
 }
+.primary{background:#0057ff;color:#fff;}
+.secondary{background:#ddd;}
+.hidden{display:none}
 
-button {
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
+/* DASHBOARD */
+#dashboard{
+    max-width:500px;
+    margin:auto;
 }
-
-.primary { background: #2563eb; color: white; }
-.danger { background: #ef4444; color: white; }
-
-#historyList {
-    margin-top: 20px;
+.status{
+    padding:8px;
+    border-radius:6px;
+    font-weight:bold;
+    margin-bottom:10px;
 }
+.disponivel{background:#d4f5dd;color:#067a2f;}
+.atendendo{background:#fff4cc;color:#946200;}
+.acw{background:#e3e3ff;color:#3a3a9f;}
 
-.history-item {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
+.history{
+    margin-top:20px;
+}
+.history-item{
+    background:#fff;
+    padding:8px;
+    border-radius:6px;
+    margin-bottom:6px;
+    font-size:14px;
 }
 </style>
 </head>
 <body>
 
-<div id="loginScreen" class="card">
-    <h2>Login</h2>
+<!-- LOGIN -->
+<div id="loginScreen">
+    <h3>Login Retenção</h3>
     <input placeholder="Usuário">
-    <input type="password" placeholder="Senha">
-    <button class="primary" style="width:100%;" onclick="login()">Entrar</button>
+    <input placeholder="Senha" type="password">
+    <button class="primary" onclick="login()">Entrar</button>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
-    <div class="card">
-        <h2>Retenção</h2>
-        <button class="primary" onclick="openFloatingPanel()">Abrir painel</button>
+    <div id="statusLabel" class="status disponivel">Disponível</div>
+    <button class="primary" onclick="openFloatingPanel()">Ativar Painel Flutuante</button>
 
-        <h3 style="margin-top:25px;">Histórico</h3>
+    <div class="history">
+        <h4>Histórico</h4>
         <div id="historyList"></div>
     </div>
 </div>
 
 <script>
 let pipWindow = null;
-let callInterval = null;
-let seconds = 0;
-let callState = "disponivel";
+let estado = "Disponível";
+let timerInterval = null;
+let tempo = 0;
 
-let selectedResult = null;
-let selectedReason = null;
-let history = [];
-
-/* LOGIN */
-
-function login() {
-    loginScreen.classList.add("hidden");
-    dashboard.classList.remove("hidden");
+function login(){
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
 }
 
-/* HISTÓRICO */
-
-function renderHistory() {
-    historyList.innerHTML = "";
-    history.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.innerHTML =
-            `<strong>${item.result}</strong>
-             ${item.reason ? "• " + item.reason : ""}
-             <br><small>${item.duration} • ${item.date}</small>`;
-        historyList.appendChild(div);
-    });
+function atualizarStatusUI(){
+    const label = document.getElementById("statusLabel");
+    label.className = "status " + estado.toLowerCase();
+    label.innerText = estado;
 }
 
-function addToHistory(duration, result, reason) {
-    history.unshift({
-        date: new Date().toLocaleString(),
-        duration,
-        result,
-        reason
-    });
-    renderHistory();
+function formatarTempo(seg){
+    const m = String(Math.floor(seg/60)).padStart(2,'0');
+    const s = String(seg%60).padStart(2,'0');
+    return m+":"+s;
 }
 
-/* TIMER */
-
-function formatTime(sec) {
-    const min = String(Math.floor(sec / 60)).padStart(2, "0");
-    const s = String(sec % 60).padStart(2, "0");
-    return `${min}:${s}`;
+function iniciarTimer(){
+    tempo = 0;
+    timerInterval = setInterval(()=>{
+        tempo++;
+        if(pipWindow && pipWindow.document.getElementById("timer")){
+            pipWindow.document.getElementById("timer").innerText = formatarTempo(tempo);
+        }
+    },1000);
 }
 
-/* FLOATING PANEL */
+function pararTimer(){
+    clearInterval(timerInterval);
+}
 
-async function openFloatingPanel() {
+function registrarHistorico(resultado,motivo=""){
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.innerText = `${resultado}${motivo? " - "+motivo:""} | ${formatarTempo(tempo)}`;
+    document.getElementById("historyList").prepend(div);
+}
 
-    if (!("documentPictureInPicture" in window)) {
-        alert("Sem suporte.");
-        return;
-    }
-
-    if (pipWindow && !pipWindow.closed) return;
+async function openFloatingPanel(){
+    if(pipWindow) return;
 
     pipWindow = await window.documentPictureInPicture.requestWindow({
-        width: 320,
-        height: 380
+        width:280,
+        height:260
     });
 
-    updatePanel();
-}
-
-function updatePanel() {
-
-    if (!pipWindow) return;
-
-    let content = "";
-
-    if (callState === "disponivel") {
-        content = `
-            <h3>Disponível</h3>
-            <button class="primary" id="start">Atender</button>
-        `;
-    }
-
-    if (callState === "atendendo") {
-        content = `
-            <h3>Em atendimento</h3>
-            <div style="font-size:28px;font-weight:600;">${formatTime(seconds)}</div>
-            <button class="danger" id="end">Encerrar</button>
-        `;
-    }
-
-    if (callState === "acw") {
-        content = `
-            <h3>Finalizar atendimento</h3>
-
-            <div class="blocks">
-                <div class="block" data-value="Retido">Retido</div>
-                <div class="block cancel" data-value="Cancelado">Cancelado</div>
-            </div>
-
-            <div id="reasons" class="hidden">
-                <div class="block small" data-value="Atendimento">Atendimento</div>
-                <div class="block small" data-value="Produto">Produto</div>
-                <div class="block small" data-value="Técnico">Técnico</div>
-                <div class="block small" data-value="Mudança de endereço">Mudança</div>
-                <div class="block small" data-value="021">021</div>
-            </div>
-
-            <button class="primary hidden" id="confirm">Confirmar</button>
-        `;
-    }
-
     pipWindow.document.body.innerHTML = `
-        <style>
-            body {
-                font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-                background:white;
-                margin:0;
-                padding:20px;
-                display:flex;
-                flex-direction:column;
-                gap:15px;
-            }
+    <style>
+    body{
+        margin:0;
+        font-family:Arial;
+        background:#ffffff;
+        padding:12px;
+        box-sizing:border-box;
+    }
+    .status{
+        font-size:14px;
+        font-weight:bold;
+        margin-bottom:6px;
+    }
+    .timer{
+        font-size:20px;
+        font-weight:bold;
+        margin-bottom:10px;
+    }
+    button{
+        width:100%;
+        padding:8px;
+        margin-bottom:6px;
+        border:none;
+        border-radius:6px;
+        font-size:14px;
+        cursor:pointer;
+    }
+    .primary{background:#0057ff;color:white;}
+    .danger{background:#e53935;color:white;}
+    .success{background:#2e7d32;color:white;}
+    select{
+        width:100%;
+        padding:6px;
+        border-radius:6px;
+        margin-bottom:6px;
+    }
+    </style>
 
-            h3 { margin:0; font-weight:600; }
+    <div class="status" id="status">Disponível</div>
+    <div class="timer" id="timer">00:00</div>
 
-            button {
-                padding:12px;
-                border-radius:10px;
-                border:none;
-                cursor:pointer;
-                font-size:15px;
-            }
+    <button class="success" id="btnAtender">Atender</button>
+    <button class="danger" id="btnDesligar" disabled>Desligar</button>
 
-            .primary { background:#2563eb; color:white; }
-            .danger { background:#ef4444; color:white; }
+    <div id="acwArea" style="display:none;">
+        <button class="success" id="btnRetido">Retido</button>
+        <button class="danger" id="btnCancelado">Cancelado</button>
 
-            .blocks {
-                display:flex;
-                gap:10px;
-            }
-
-            .block {
-                flex:1;
-                padding:12px;
-                border-radius:10px;
-                border:1px solid #ddd;
-                text-align:center;
-                cursor:pointer;
-                font-size:14px;
-            }
-
-            .block.small { margin-top:8px; }
-
-            .block.active {
-                border-color:#2563eb;
-                background:#eff6ff;
-            }
-
-            .hidden { display:none; }
-        </style>
-
-        ${content}
+        <div id="cancelamentoArea" style="display:none;">
+            <select id="motivo">
+                <option value="">Selecione motivo</option>
+                <option>Atendimento</option>
+                <option>Produto</option>
+                <option>Técnico</option>
+                <option>Mudança de endereço</option>
+                <option>021</option>
+            </select>
+            <button class="primary" id="btnConfirmar">Confirmar</button>
+        </div>
+    </div>
     `;
 
-    bindPanelEvents();
+    const doc = pipWindow.document;
+
+    doc.getElementById("btnAtender").onclick = () => {
+        estado = "Atendendo";
+        atualizarStatusUI();
+        doc.getElementById("status").innerText = estado;
+        doc.getElementById("btnDesligar").disabled = false;
+        iniciarTimer();
+    };
+
+    doc.getElementById("btnDesligar").onclick = () => {
+        pararTimer();
+        estado = "ACW";
+        atualizarStatusUI();
+        doc.getElementById("status").innerText = estado;
+        doc.getElementById("acwArea").style.display = "block";
+    };
+
+    doc.getElementById("btnRetido").onclick = () => {
+        registrarHistorico("Retido");
+        resetarEstado(doc);
+    };
+
+    doc.getElementById("btnCancelado").onclick = () => {
+        doc.getElementById("cancelamentoArea").style.display = "block";
+    };
+
+    doc.getElementById("btnConfirmar").onclick = () => {
+        const motivo = doc.getElementById("motivo").value;
+        if(!motivo) return;
+        registrarHistorico("Cancelado",motivo);
+        resetarEstado(doc);
+    };
+
+    pipWindow.addEventListener("beforeunload",()=>{
+        pipWindow = null;
+    });
 }
 
-function bindPanelEvents() {
-
-    if (!pipWindow) return;
-
-    if (callState === "disponivel") {
-        pipWindow.document.getElementById("start")
-            .addEventListener("click", startCall);
-    }
-
-    if (callState === "atendendo") {
-        pipWindow.document.getElementById("end")
-            .addEventListener("click", goToACW);
-    }
-
-    if (callState === "acw") {
-
-        const resultBlocks = pipWindow.document.querySelectorAll(".blocks .block");
-        const reasons = pipWindow.document.getElementById("reasons");
-        const confirm = pipWindow.document.getElementById("confirm");
-
-        resultBlocks.forEach(block => {
-            block.addEventListener("click", () => {
-
-                resultBlocks.forEach(b => b.classList.remove("active"));
-                block.classList.add("active");
-
-                selectedResult = block.dataset.value;
-                selectedReason = null;
-
-                if (selectedResult === "Cancelado") {
-                    reasons.classList.remove("hidden");
-                } else {
-                    reasons.classList.add("hidden");
-                    confirm.classList.remove("hidden");
-                }
-            });
-        });
-
-        pipWindow.document.querySelectorAll("#reasons .block")
-            .forEach(block => {
-                block.addEventListener("click", () => {
-                    pipWindow.document.querySelectorAll("#reasons .block")
-                        .forEach(b => b.classList.remove("active"));
-
-                    block.classList.add("active");
-                    selectedReason = block.dataset.value;
-                    confirm.classList.remove("hidden");
-                });
-            });
-
-        confirm.addEventListener("click", finalizeCall);
-    }
+function resetarEstado(doc){
+    estado = "Disponível";
+    atualizarStatusUI();
+    doc.getElementById("status").innerText = estado;
+    doc.getElementById("timer").innerText = "00:00";
+    doc.getElementById("btnDesligar").disabled = true;
+    doc.getElementById("acwArea").style.display = "none";
 }
-
-/* CALL FLOW */
-
-function startCall() {
-    callState = "atendendo";
-    seconds = 0;
-
-    callInterval = setInterval(() => {
-        seconds++;
-        if (callState === "atendendo") updatePanel();
-    }, 1000);
-
-    updatePanel();
-}
-
-function goToACW() {
-    clearInterval(callInterval);
-    callState = "acw";
-    updatePanel();
-}
-
-function finalizeCall() {
-
-    if (!selectedResult) return;
-    if (selectedResult === "Cancelado" && !selectedReason) return;
-
-    addToHistory(
-        formatTime(seconds),
-        selectedResult,
-        selectedResult === "Retido" ? "" : selectedReason
-    );
-
-    seconds = 0;
-    selectedResult = null;
-    selectedReason = null;
-    callState = "disponivel";
-
-    updatePanel();
-}
-
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-        openFloatingPanel();
-    }
-});
 </script>
 
 </body>
