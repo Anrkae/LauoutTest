@@ -1,250 +1,348 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Painel Retenção</title>
 
 <style>
-body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f8;
-    margin:0;
-    padding:20px;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 30px;
 }
 
-/* LOGIN */
-#loginScreen{
-    max-width:300px;
-    margin:auto;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-input{
-    padding:8px;
-    border:1px solid #ccc;
-    border-radius:6px;
-}
-button{
-    padding:8px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-.primary{background:#0057ff;color:#fff;}
-.secondary{background:#ddd;}
-.hidden{display:none}
+.hidden { display: none; }
 
-/* DASHBOARD */
-#dashboard{
-    max-width:500px;
-    margin:auto;
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 14px;
+    max-width: 500px;
+    margin: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
-.status{
-    padding:8px;
-    border-radius:6px;
-    font-weight:bold;
-    margin-bottom:10px;
-}
-.disponivel{background:#d4f5dd;color:#067a2f;}
-.atendendo{background:#fff4cc;color:#946200;}
-.acw{background:#e3e3ff;color:#3a3a9f;}
 
-.history{
-    margin-top:20px;
+h2 { margin-top: 0; font-weight: 600; }
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
 }
-.history-item{
-    background:#fff;
-    padding:8px;
-    border-radius:6px;
-    margin-bottom:6px;
-    font-size:14px;
+
+button {
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.primary { background: #2563eb; color: white; }
+.danger { background: #ef4444; color: white; }
+
+#historyList { margin-top: 20px; }
+
+.history-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
 }
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen">
-    <h3>Login Retenção</h3>
+<div id="loginScreen" class="card">
+    <h2>Login</h2>
     <input placeholder="Usuário">
-    <input placeholder="Senha" type="password">
-    <button class="primary" onclick="login()">Entrar</button>
+    <input type="password" placeholder="Senha">
+    <button class="primary" style="width:100%;" onclick="login()">Entrar</button>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
-    <div id="statusLabel" class="status disponivel">Disponível</div>
-    <button class="primary" onclick="openFloatingPanel()">Ativar Painel Flutuante</button>
+    <div class="card">
+        <h2>Retenção</h2>
+        <button class="primary" onclick="openFloatingPanel()">Abrir painel</button>
 
-    <div class="history">
-        <h4>Histórico</h4>
+        <h3 style="margin-top:25px;">Histórico</h3>
         <div id="historyList"></div>
     </div>
 </div>
 
 <script>
 let pipWindow = null;
-let estado = "Disponível";
-let timerInterval = null;
-let tempo = 0;
+let callInterval = null;
+let seconds = 0;
+let callState = "disponivel";
 
-function login(){
-    document.getElementById("loginScreen").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
+let selectedResult = null;
+let selectedReason = null;
+let history = [];
+
+/* LOGIN */
+
+function login() {
+    loginScreen.classList.add("hidden");
+    dashboard.classList.remove("hidden");
 }
 
-function atualizarStatusUI(){
-    const label = document.getElementById("statusLabel");
-    label.className = "status " + estado.toLowerCase();
-    label.innerText = estado;
+/* HISTÓRICO */
+
+function renderHistory() {
+    historyList.innerHTML = "";
+    history.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML =
+            `<strong>${item.result}</strong>
+             ${item.reason ? "• " + item.reason : ""}
+             <br><small>${item.duration} • ${item.date}</small>`;
+        historyList.appendChild(div);
+    });
 }
 
-function formatarTempo(seg){
-    const m = String(Math.floor(seg/60)).padStart(2,'0');
-    const s = String(seg%60).padStart(2,'0');
-    return m+":"+s;
+function addToHistory(duration, result, reason) {
+    history.unshift({
+        date: new Date().toLocaleString(),
+        duration,
+        result,
+        reason
+    });
+    renderHistory();
 }
 
-function iniciarTimer(){
-    tempo = 0;
-    timerInterval = setInterval(()=>{
-        tempo++;
-        if(pipWindow && pipWindow.document.getElementById("timer")){
-            pipWindow.document.getElementById("timer").innerText = formatarTempo(tempo);
-        }
-    },1000);
+/* TIMER */
+
+function formatTime(sec) {
+    const min = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${min}:${s}`;
 }
 
-function pararTimer(){
-    clearInterval(timerInterval);
-}
+/* FLOATING PANEL */
 
-function registrarHistorico(resultado,motivo=""){
-    const div = document.createElement("div");
-    div.className = "history-item";
-    div.innerText = `${resultado}${motivo? " - "+motivo:""} | ${formatarTempo(tempo)}`;
-    document.getElementById("historyList").prepend(div);
-}
+async function openFloatingPanel() {
 
-async function openFloatingPanel(){
-    if(pipWindow) return;
+    if (!("documentPictureInPicture" in window)) {
+        alert("Sem suporte.");
+        return;
+    }
+
+    if (pipWindow && !pipWindow.closed) return;
 
     pipWindow = await window.documentPictureInPicture.requestWindow({
-        width:280,
-        height:260
+        width: 300,
+        height: 330
     });
 
     pipWindow.document.body.innerHTML = `
-    <style>
-    body{
-        margin:0;
-        font-family:Arial;
-        background:#ffffff;
-        padding:12px;
-        box-sizing:border-box;
-    }
-    .status{
-        font-size:14px;
-        font-weight:bold;
-        margin-bottom:6px;
-    }
-    .timer{
-        font-size:20px;
-        font-weight:bold;
-        margin-bottom:10px;
-    }
-    button{
-        width:100%;
-        padding:8px;
-        margin-bottom:6px;
-        border:none;
-        border-radius:6px;
-        font-size:14px;
-        cursor:pointer;
-    }
-    .primary{background:#0057ff;color:white;}
-    .danger{background:#e53935;color:white;}
-    .success{background:#2e7d32;color:white;}
-    select{
-        width:100%;
-        padding:6px;
-        border-radius:6px;
-        margin-bottom:6px;
-    }
-    </style>
+        <style>
+            body {
+                font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                background:white;
+                margin:0;
+                padding:18px;
+                display:flex;
+                flex-direction:column;
+                gap:12px;
+            }
 
-    <div class="status" id="status">Disponível</div>
-    <div class="timer" id="timer">00:00</div>
+            h3 { margin:0; font-weight:600; }
 
-    <button class="success" id="btnAtender">Atender</button>
-    <button class="danger" id="btnDesligar" disabled>Desligar</button>
+            .timer {
+                font-size:28px;
+                font-weight:600;
+            }
 
-    <div id="acwArea" style="display:none;">
-        <button class="success" id="btnRetido">Retido</button>
-        <button class="danger" id="btnCancelado">Cancelado</button>
+            button {
+                padding:12px;
+                border-radius:10px;
+                border:none;
+                cursor:pointer;
+                font-size:14px;
+            }
 
-        <div id="cancelamentoArea" style="display:none;">
-            <select id="motivo">
-                <option value="">Selecione motivo</option>
-                <option>Atendimento</option>
-                <option>Produto</option>
-                <option>Técnico</option>
-                <option>Mudança de endereço</option>
-                <option>021</option>
-            </select>
-            <button class="primary" id="btnConfirmar">Confirmar</button>
+            .primary { background:#2563eb; color:white; }
+            .danger { background:#ef4444; color:white; }
+
+            .blocks {
+                display:flex;
+                gap:8px;
+            }
+
+            .block {
+                flex:1;
+                padding:10px;
+                border-radius:8px;
+                border:1px solid #ddd;
+                text-align:center;
+                cursor:pointer;
+                font-size:13px;
+            }
+
+            .block.active {
+                border-color:#2563eb;
+                background:#eff6ff;
+            }
+
+            .hidden { display:none; }
+        </style>
+
+        <h3 id="statusTitle">Disponível</h3>
+
+        <div id="timer" class="timer hidden">00:00</div>
+
+        <button id="startBtn" class="primary">Atender</button>
+        <button id="endBtn" class="danger hidden">Encerrar</button>
+
+        <div id="acwArea" class="hidden">
+            <div class="blocks">
+                <div class="block" data-value="Retido">Retido</div>
+                <div class="block" data-value="Cancelado">Cancelado</div>
+            </div>
+
+            <div id="reasons" class="hidden" style="margin-top:8px;">
+                <div class="block" data-value="Atendimento">Atendimento</div>
+                <div class="block" data-value="Produto">Produto</div>
+                <div class="block" data-value="Técnico">Técnico</div>
+                <div class="block" data-value="Mudança de endereço">Mudança</div>
+                <div class="block" data-value="021">021</div>
+            </div>
+
+            <button id="confirmBtn" class="primary hidden" style="margin-top:8px;">
+                Confirmar
+            </button>
         </div>
-    </div>
     `;
+
+    bindPanel();
+}
+
+function bindPanel() {
 
     const doc = pipWindow.document;
 
-    doc.getElementById("btnAtender").onclick = () => {
-        estado = "Atendendo";
-        atualizarStatusUI();
-        doc.getElementById("status").innerText = estado;
-        doc.getElementById("btnDesligar").disabled = false;
-        iniciarTimer();
+    const statusTitle = doc.getElementById("statusTitle");
+    const timer = doc.getElementById("timer");
+    const startBtn = doc.getElementById("startBtn");
+    const endBtn = doc.getElementById("endBtn");
+    const acwArea = doc.getElementById("acwArea");
+    const confirmBtn = doc.getElementById("confirmBtn");
+    const reasons = doc.getElementById("reasons");
+
+    startBtn.onclick = () => {
+
+        callState = "atendendo";
+        seconds = 0;
+
+        statusTitle.textContent = "Em atendimento";
+
+        startBtn.classList.add("hidden");
+        timer.classList.remove("hidden");
+        endBtn.classList.remove("hidden");
+
+        callInterval = setInterval(() => {
+            seconds++;
+            timer.textContent = formatTime(seconds);
+        }, 1000);
     };
 
-    doc.getElementById("btnDesligar").onclick = () => {
-        pararTimer();
-        estado = "ACW";
-        atualizarStatusUI();
-        doc.getElementById("status").innerText = estado;
-        doc.getElementById("acwArea").style.display = "block";
+    endBtn.onclick = () => {
+
+        clearInterval(callInterval);
+        callState = "acw";
+
+        statusTitle.textContent = "Finalizar";
+        endBtn.classList.add("hidden");
+
+        acwArea.classList.remove("hidden");
     };
 
-    doc.getElementById("btnRetido").onclick = () => {
-        registrarHistorico("Retido");
-        resetarEstado(doc);
-    };
+    doc.querySelectorAll(".blocks .block").forEach(block => {
 
-    doc.getElementById("btnCancelado").onclick = () => {
-        doc.getElementById("cancelamentoArea").style.display = "block";
-    };
+        block.onclick = () => {
 
-    doc.getElementById("btnConfirmar").onclick = () => {
-        const motivo = doc.getElementById("motivo").value;
-        if(!motivo) return;
-        registrarHistorico("Cancelado",motivo);
-        resetarEstado(doc);
-    };
+            doc.querySelectorAll(".block")
+                .forEach(b => b.classList.remove("active"));
 
-    pipWindow.addEventListener("beforeunload",()=>{
-        pipWindow = null;
+            block.classList.add("active");
+
+            selectedResult = block.dataset.value;
+            selectedReason = null;
+
+            if (selectedResult === "Cancelado") {
+                reasons.classList.remove("hidden");
+                confirmBtn.classList.add("hidden");
+            } else {
+                reasons.classList.add("hidden");
+                confirmBtn.classList.remove("hidden");
+            }
+        };
     });
+
+    doc.querySelectorAll("#reasons .block")
+        .forEach(block => {
+
+            block.onclick = () => {
+
+                doc.querySelectorAll("#reasons .block")
+                    .forEach(b => b.classList.remove("active"));
+
+                block.classList.add("active");
+                selectedReason = block.dataset.value;
+                confirmBtn.classList.remove("hidden");
+            };
+        });
+
+    confirmBtn.onclick = () => {
+
+        if (!selectedResult) return;
+        if (selectedResult === "Cancelado" && !selectedReason) return;
+
+        addToHistory(
+            formatTime(seconds),
+            selectedResult,
+            selectedResult === "Retido" ? "" : selectedReason
+        );
+
+        resetPanel();
+    };
 }
 
-function resetarEstado(doc){
-    estado = "Disponível";
-    atualizarStatusUI();
-    doc.getElementById("status").innerText = estado;
-    doc.getElementById("timer").innerText = "00:00";
-    doc.getElementById("btnDesligar").disabled = true;
-    doc.getElementById("acwArea").style.display = "none";
+function resetPanel() {
+
+    const doc = pipWindow.document;
+
+    seconds = 0;
+    selectedResult = null;
+    selectedReason = null;
+    callState = "disponivel";
+
+    doc.getElementById("statusTitle").textContent = "Disponível";
+    doc.getElementById("timer").textContent = "00:00";
+
+    doc.getElementById("timer").classList.add("hidden");
+    doc.getElementById("endBtn").classList.add("hidden");
+    doc.getElementById("acwArea").classList.add("hidden");
+    doc.getElementById("confirmBtn").classList.add("hidden");
+    doc.getElementById("reasons").classList.add("hidden");
+
+    doc.getElementById("startBtn").classList.remove("hidden");
+
+    doc.querySelectorAll(".block")
+        .forEach(b => b.classList.remove("active"));
 }
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        openFloatingPanel();
+    }
+});
 </script>
 
 </body>
