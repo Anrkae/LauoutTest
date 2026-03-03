@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Sistema Atendimento</title>
+<title>Sistema Atendimento - Retenção</title>
 
 <style>
 body {
@@ -65,7 +65,7 @@ button {
 
 <div id="dashboard" class="hidden">
     <div class="card">
-        <h2>Painel de Atendimento</h2>
+        <h2>Painel de Retenção</h2>
         <button onclick="openFloatingPanel()">Abrir Painel Flutuante</button>
 
         <h3>Histórico</h3>
@@ -77,10 +77,7 @@ button {
 let pipWindow = null;
 let callInterval = null;
 let seconds = 0;
-
 let callState = "disponivel"; 
-// disponivel | atendendo | acw
-
 let history = [];
 
 /* ================= LOGIN ================= */
@@ -99,18 +96,19 @@ function renderHistory() {
     history.forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
-        div.textContent = 
-            `Data: ${item.date} | Duração: ${item.duration} | Motivo: ${item.reason}`;
+        div.textContent =
+            `Data: ${item.date} | Duração: ${item.duration} | Resultado: ${item.result} | Motivo: ${item.reason}`;
         list.appendChild(div);
     });
 }
 
-function addToHistory(duration, reason) {
+function addToHistory(duration, result, reason) {
     const now = new Date();
 
     history.unshift({
         date: now.toLocaleString(),
         duration,
+        result,
         reason
     });
 
@@ -130,7 +128,7 @@ function formatTime(sec) {
 async function openFloatingPanel() {
 
     if (!("documentPictureInPicture" in window)) {
-        alert("Seu navegador não suporta Document Picture-in-Picture.");
+        alert("Sem suporte a Document PiP.");
         return;
     }
 
@@ -138,7 +136,7 @@ async function openFloatingPanel() {
 
     pipWindow = await window.documentPictureInPicture.requestWindow({
         width: 320,
-        height: 260
+        height: 300
     });
 
     updatePanelUI();
@@ -148,31 +146,36 @@ function updatePanelUI() {
 
     if (!pipWindow) return;
 
-    let title = "";
-    let buttonHTML = "";
-    let timerHTML = "";
+    let content = "";
 
     if (callState === "disponivel") {
-        title = "🟢 Disponível";
-        buttonHTML = `<button id="actionBtn" class="green">Atender</button>`;
+        content = `
+            <h3>🟢 Disponível</h3>
+            <button id="startBtn" class="green">Atender</button>
+        `;
     }
 
     if (callState === "atendendo") {
-        title = "🔵 Atendendo";
-        timerHTML = `<div id="timer">${formatTime(seconds)}</div>`;
-        buttonHTML = `<button id="actionBtn" class="red">Encerrar</button>`;
+        content = `
+            <h3>🔵 Atendendo</h3>
+            <div id="timer">${formatTime(seconds)}</div>
+            <button id="endBtn" class="red">Encerrar</button>
+        `;
     }
 
     if (callState === "acw") {
-        title = "🟣 ACW - Finalizando";
-        buttonHTML = `
-            <select id="cancelReason">
-                <option value="Cliente desligou">Cliente desligou</option>
-                <option value="Queda de conexão">Queda de conexão</option>
-                <option value="Resolvido">Resolvido</option>
-                <option value="Engano">Engano</option>
+        content = `
+            <h3>🟣 ACW</h3>
+
+            <select id="resultSelect">
+                <option value="">Selecione resultado</option>
+                <option value="Retido">Retido</option>
+                <option value="Cancelado">Cancelado</option>
             </select>
-            <button id="confirmACW" class="green">Confirmar</button>
+
+            <div id="cancelReasonsContainer"></div>
+
+            <button id="confirmBtn" class="green">Confirmar</button>
         `;
     }
 
@@ -187,15 +190,15 @@ function updatePanelUI() {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                height: 100vh;
                 gap: 10px;
+                height: 100vh;
             }
 
             button, select {
                 padding: 10px;
                 border: none;
                 border-radius: 8px;
-                width: 160px;
+                width: 180px;
                 font-weight: bold;
                 cursor: pointer;
             }
@@ -206,33 +209,53 @@ function updatePanelUI() {
             #timer { font-size: 22px; }
         </style>
 
-        <h3>${title}</h3>
-        ${timerHTML}
-        ${buttonHTML}
+        ${content}
     `;
 
-    bindPanelEvents();
+    bindEvents();
 }
 
-function bindPanelEvents() {
+function bindEvents() {
 
     if (!pipWindow) return;
 
     if (callState === "disponivel") {
         pipWindow.document
-            .getElementById("actionBtn")
+            .getElementById("startBtn")
             .addEventListener("click", startCall);
     }
 
     if (callState === "atendendo") {
         pipWindow.document
-            .getElementById("actionBtn")
+            .getElementById("endBtn")
             .addEventListener("click", goToACW);
     }
 
     if (callState === "acw") {
+
+        const resultSelect = pipWindow.document.getElementById("resultSelect");
+        const cancelContainer = pipWindow.document.getElementById("cancelReasonsContainer");
+
+        resultSelect.addEventListener("change", () => {
+
+            if (resultSelect.value === "Cancelado") {
+
+                cancelContainer.innerHTML = `
+                    <select id="cancelReason">
+                        <option value="Atendimento">Atendimento</option>
+                        <option value="Produto">Produto</option>
+                        <option value="Técnico">Técnico</option>
+                        <option value="Mudança de endereço">Mudança de endereço</option>
+                        <option value="021">021</option>
+                    </select>
+                `;
+            } else {
+                cancelContainer.innerHTML = "";
+            }
+        });
+
         pipWindow.document
-            .getElementById("confirmACW")
+            .getElementById("confirmBtn")
             .addEventListener("click", finalizeCall);
     }
 }
@@ -261,12 +284,23 @@ function goToACW() {
 
 function finalizeCall() {
 
-    const reason = pipWindow.document
-        .getElementById("cancelReason").value;
+    const result = pipWindow.document.getElementById("resultSelect").value;
+
+    if (!result) {
+        alert("Selecione o resultado.");
+        return;
+    }
+
+    let reason = "-";
+
+    if (result === "Cancelado") {
+        const reasonSelect = pipWindow.document.getElementById("cancelReason");
+        reason = reasonSelect ? reasonSelect.value : "-";
+    }
 
     const duration = formatTime(seconds);
 
-    addToHistory(duration, reason);
+    addToHistory(duration, result, reason);
 
     seconds = 0;
     callState = "disponivel";
