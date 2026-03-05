@@ -57,7 +57,7 @@ width:100%;
 .row{
 display:flex;
 gap:8px;
-margin-top:8px;
+margin-top:10px;
 }
 
 .row button{
@@ -118,16 +118,12 @@ font-size:14px;
 </head>
 <body>
 
-<!-- LOGIN -->
-
 <div id="loginScreen" class="card">
 <h2>Login</h2>
 <input placeholder="Usuário">
 <input type="password" placeholder="Senha">
 <button class="primary" onclick="login()">Entrar</button>
 </div>
-
-<!-- DASHBOARD -->
 
 <div id="dashboard" class="hidden">
 
@@ -176,7 +172,6 @@ font-size:14px;
 </div>
 
 </div>
-
 </div>
 
 <script>
@@ -304,7 +299,6 @@ function bindPanel(doc){
 
 const status=doc.getElementById("status")
 const timer=doc.getElementById("timer")
-
 const startBtn=doc.getElementById("startBtn")
 const endBtn=doc.getElementById("endBtn")
 
@@ -331,19 +325,41 @@ clearInterval(callInterval)
 
 status.textContent="Finalizando"
 
+openModal()
+
+}
+
+}
+
+/* MODAL CONTROL */
+
+function openModal(){
+
 modal.classList.remove("hidden")
 
-}
+modalStep1.classList.remove("hidden")
+modalStep2.classList.add("hidden")
+
+reason.value=""
 
 }
 
-/* MODAL */
+function closeModal(){
+
+modal.classList.add("hidden")
+
+resetPanel()
+
+}
+
+/* MODAL EVENTS */
 
 retidoBtn.onclick=()=>{
 
 if(confirmButton===retidoBtn){
 
 addToHistory(formatTime(seconds),"Retido","")
+
 closeModal()
 
 }else{
@@ -382,21 +398,6 @@ startConfirm(confirmCancel)
 
 }
 
-/* CLOSE */
-
-function closeModal(){
-
-modal.classList.add("hidden")
-
-modalStep1.classList.remove("hidden")
-modalStep2.classList.add("hidden")
-
-reason.value=""
-
-resetPanel()
-
-}
-
 /* RESET */
 
 function resetPanel(){
@@ -418,6 +419,8 @@ endBtn.classList.add("hidden")
 startBtn.classList.remove("hidden")
 
 resetConfirm()
+
+modal.classList.add("hidden")
 
 }
 
