@@ -1,388 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Painel Retenção</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel</title>
 
 <style>
 
 body{
-font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-background:#f5f5f5;
+font-family: Arial;
 margin:0;
-padding:30px;
+padding:20px;
+background:#f5f5f5;
 }
-
-.hidden{display:none}
-
-.card{
-background:white;
-padding:25px;
-border-radius:14px;
-max-width:500px;
-margin:auto;
-box-shadow:0 8px 20px rgba(0,0,0,0.05);
-}
-
-button{
-padding:14px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-width:100%;
-font-size:14px;
-margin-top:8px;
-}
-
-.primary{background:#2563eb;color:white}
-.danger{background:#ef4444;color:white}
 
 .panel{
 background:white;
-padding:16px;
-border-radius:12px;
-box-shadow:0 4px 12px rgba(0,0,0,0.08);
-margin-top:20px;
+padding:15px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+max-width:420px;
+margin:auto;
 }
 
-.timer{
-font-size:26px;
-font-weight:600;
-margin-bottom:10px;
+button{
+padding:12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:14px;
+margin:4px;
 }
 
-.row{
+.btn-primary{
+background:#1976d2;
+color:white;
+width:100%;
+}
+
+.btn-success{
+background:#2e7d32;
+color:white;
+}
+
+.btn-danger{
+background:#c62828;
+color:white;
+}
+
+.btn-secondary{
+background:#555;
+color:white;
+}
+
+.btn-row{
 display:flex;
 gap:8px;
+margin-top:8px;
 }
 
-.row button{
+.btn-row button{
 flex:1;
-margin-top:0;
-}
-
-/* MODAL */
-
-.modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.4);
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-.modalCard{
-background:white;
-padding:20px;
-border-radius:12px;
-width:260px;
 }
 
 select{
 width:100%;
 padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
 margin-top:10px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+/* modal */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal-content{
+background:white;
+padding:20px;
+border-radius:10px;
+width:90%;
+max-width:350px;
 }
 
 </style>
 </head>
+
 <body>
-
-<!-- LOGIN -->
-
-<div id="loginScreen" class="card">
-
-<h2>Login</h2>
-
-<input placeholder="Usuário">
-<input type="password" placeholder="Senha">
-
-<button class="primary" onclick="login()">Entrar</button>
-
-</div>
-
-<!-- DASHBOARD -->
-
-<div id="dashboard" class="hidden">
-
-<div class="card">
-
-<h2>Retenção</h2>
-
-<div id="panelContainer"></div>
-
-<h3 style="margin-top:25px;">Histórico</h3>
-
-<div id="historyList"></div>
-
-</div>
-
-</div>
-
-<!-- MODAL -->
-
-<div id="modal" class="modal hidden">
-
-<div class="modalCard">
-
-<h3 id="modalTitle">Finalizar</h3>
-
-<div id="modalContent"></div>
-
-</div>
-
-</div>
-
-<script>
-
-let pipWindow
-let seconds=0
-let interval
-
-let history=[]
-
-/* LOGIN */
-
-function login(){
-
-loginScreen.classList.add("hidden")
-dashboard.classList.remove("hidden")
-
-renderPanel(panelContainer)
-
-}
-
-/* HISTÓRICO */
-
-function renderHistory(){
-
-historyList.innerHTML=""
-
-history.forEach(item=>{
-
-const div=document.createElement("div")
-
-div.innerHTML=`
-<strong>${item.result}</strong>
-${item.reason?" • "+item.reason:""}
-<br><small>${item.duration} • ${item.date}</small>
-`
-
-historyList.appendChild(div)
-
-})
-
-}
-
-function addHistory(duration,result,reason){
-
-history.unshift({
-date:new Date().toLocaleString(),
-duration,
-result,
-reason
-})
-
-renderHistory()
-
-}
-
-/* TIMER */
-
-function formatTime(sec){
-
-const m=String(Math.floor(sec/60)).padStart(2,"0")
-const s=String(sec%60).padStart(2,"0")
-
-return `${m}:${s}`
-
-}
-
-/* PANEL */
-
-function renderPanel(container){
-
-container.innerHTML=`
 
 <div class="panel">
 
-<h3 id="status">Disponível</h3>
+<h3>Atendimento</h3>
 
-<div id="timer" class="timer hidden">00:00</div>
-
-<button id="startBtn" class="primary">Atender</button>
-
-<button id="endBtn" class="danger hidden">Encerrar</button>
+<button class="btn-primary" id="btnEncerrar">
+Encerrar Atendimento
+</button>
 
 </div>
 
-`
 
-bindPanel(container)
+<!-- MODAL -->
 
-}
+<div class="modal" id="modal">
 
-function bindPanel(container){
+<div class="modal-content">
 
-const status=container.querySelector("#status")
-const timer=container.querySelector("#timer")
+<div id="step1">
 
-const startBtn=container.querySelector("#startBtn")
-const endBtn=container.querySelector("#endBtn")
+<h4>Resultado do atendimento</h4>
 
-startBtn.onclick=()=>{
-
-seconds=0
-
-status.textContent="Em atendimento"
-
-startBtn.classList.add("hidden")
-timer.classList.remove("hidden")
-endBtn.classList.remove("hidden")
-
-interval=setInterval(()=>{
-
-seconds++
-timer.textContent=formatTime(seconds)
-
-},1000)
-
-}
-
-endBtn.onclick=()=>{
-
-openFinishModal()
-
-}
-
-}
-
-/* MODAL */
-
-function openFinishModal(){
-
-modal.classList.remove("hidden")
-
-modalTitle.textContent="Finalizar atendimento"
-
-modalContent.innerHTML=`
-
-<div class="row">
-
-<button id="retidoBtn" class="primary">Retido</button>
-
-<button id="cancelBtn" class="danger">Cancelado</button>
+<div class="btn-row">
+<button class="btn-success" id="btnRetido">Retido</button>
+<button class="btn-danger" id="btnCancelado">Cancelado</button>
+</div>
 
 </div>
 
-`
 
-document.getElementById("retidoBtn").onclick=()=>confirmRetido()
+<div id="step2-retido" style="display:none">
 
-document.getElementById("cancelBtn").onclick=()=>showCancelReasons()
+<h4>Confirmar retenção?</h4>
 
-}
+<button class="btn-success" id="confirmRetido">
+Confirmar Retido
+</button>
 
-/* RETIDO */
+</div>
 
-function confirmRetido(){
 
-modalContent.innerHTML=`
+<div id="step2-cancelado" style="display:none">
 
-<p>Confirmar retenção?</p>
+<h4>Motivo do cancelamento</h4>
 
-<button class="primary" id="confirm">Confirmar</button>
-
-`
-
-document.getElementById("confirm").onclick=()=>{
-
-finishCall("Retido","")
-
-}
-
-}
-
-/* CANCELADO */
-
-function showCancelReasons(){
-
-modalTitle.textContent="Motivo cancelamento"
-
-modalContent.innerHTML=`
-
-<select id="reason">
-
+<select id="motivo">
 <option value="">Selecione</option>
-<option>Atendimento</option>
-<option>Produto</option>
-<option>Técnico</option>
-<option>Mudança de endereço</option>
-<option>021</option>
-
+<option>Valor alto</option>
+<option>Mudança de operadora</option>
+<option>Problema técnico</option>
+<option>Outro</option>
 </select>
 
-<button class="danger" id="finish">Concluir</button>
+<button class="btn-danger" id="confirmCancelado">
+Concluir Cancelamento
+</button>
 
-`
+</div>
 
-document.getElementById("finish").onclick=()=>{
+</div>
 
-const reason=document.getElementById("reason").value
+</div>
 
-if(!reason) return
 
-finishCall("Cancelado",reason)
+<script>
+
+const modal = document.getElementById("modal")
+
+const step1 = document.getElementById("step1")
+const step2Retido = document.getElementById("step2-retido")
+const step2Cancelado = document.getElementById("step2-cancelado")
+
+const motivo = document.getElementById("motivo")
+
+document.getElementById("btnEncerrar").onclick = () => {
+openModal()
+}
+
+document.getElementById("btnRetido").onclick = () => {
+
+step1.style.display="none"
+step2Retido.style.display="block"
 
 }
 
-}
+document.getElementById("btnCancelado").onclick = () => {
 
-/* FINALIZAR */
-
-function finishCall(result,reason){
-
-clearInterval(interval)
-
-addHistory(formatTime(seconds),result,reason)
-
-seconds=0
-
-modal.classList.add("hidden")
-
-renderPanel(panelContainer)
+step1.style.display="none"
+step2Cancelado.style.display="block"
 
 }
 
-/* PIP */
+document.getElementById("confirmRetido").onclick = () => {
 
-async function movePanelToPip(){
-
-if(!("documentPictureInPicture" in window)) return
-
-pipWindow=await documentPictureInPicture.requestWindow({
-width:280,
-height:220
-})
-
-renderPanel(pipWindow.document.body)
+alert("Retenção registrada")
+resetModal()
 
 }
 
-/* DETECTAR SAÍDA DA ABA */
+document.getElementById("confirmCancelado").onclick = () => {
 
-document.addEventListener("visibilitychange",()=>{
+if(motivo.value===""){
+alert("Selecione o motivo")
+return
+}
 
-if(document.visibilityState==="hidden"){
+alert("Cancelamento registrado")
 
-movePanelToPip()
+resetModal()
 
 }
 
-})
+function openModal(){
+modal.style.display="flex"
+}
+
+function closeModal(){
+modal.style.display="none"
+}
+
+function resetModal(){
+
+modal.style.display="none"
+
+step1.style.display="block"
+step2Retido.style.display="none"
+step2Cancelado.style.display="none"
+
+motivo.value=""
+
+}
 
 </script>
 
