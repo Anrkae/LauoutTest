@@ -1,427 +1,289 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel Retenção</title>
 
 <style>
 
 body{
-font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-background:#f5f5f5;
+font-family: Arial;
+background:#f4f6f9;
 margin:0;
-padding:30px;
+padding:20px;
 }
 
-.hidden{display:none}
+/* painel */
 
-.card{
+.panel{
 background:white;
-padding:25px;
-border-radius:14px;
-max-width:500px;
-margin:auto;
-box-shadow:0 8px 20px rgba(0,0,0,0.05);
-}
-
-h2{margin-top:0;font-weight:600}
-
-input{
-width:100%;
-padding:12px;
-margin-bottom:12px;
-border-radius:8px;
-border:1px solid #ddd;
-}
-
-button{
-padding:14px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-font-weight:500;
-width:100%;
-}
-
-.primary{background:#2563eb;color:white}
-.danger{background:#ef4444;color:white}
-
-.history-item{
-padding:10px 0;
-border-bottom:1px solid #eee;
-font-size:14px;
-}
-
-</style>
-</head>
-<body>
-
-<div id="loginScreen" class="card">
-<h2>Login</h2>
-<input placeholder="Usuário">
-<input type="password" placeholder="Senha">
-<button class="primary" onclick="login()">Entrar</button>
-</div>
-
-<div id="dashboard" class="hidden">
-<div class="card">
-
-<h2>Retenção</h2>
-
-<button class="primary" onclick="openFloatingPanel()">Abrir painel</button>
-
-<h3 style="margin-top:25px;">Histórico</h3>
-<div id="historyList"></div>
-
-</div>
-</div>
-
-<script>
-
-let pipWindow
-let callInterval
-let seconds=0
-let callState="disponivel"
-
-let confirmTimer=null
-let confirmButton=null
-
-let history=[]
-
-function login(){
-loginScreen.classList.add("hidden")
-dashboard.classList.remove("hidden")
-}
-
-/* HISTÓRICO */
-
-function renderHistory(){
-
-historyList.innerHTML=""
-
-history.forEach(item=>{
-
-const div=document.createElement("div")
-
-div.className="history-item"
-
-div.innerHTML=`
-<strong>${item.result}</strong>
-${item.reason?" • "+item.reason:""}
-<br><small>${item.duration} • ${item.date}</small>
-`
-
-historyList.appendChild(div)
-
-})
-
-}
-
-function addToHistory(duration,result,reason){
-
-history.unshift({
-date:new Date().toLocaleString(),
-duration,
-result,
-reason
-})
-
-renderHistory()
-
-}
-
-/* TIMER */
-
-function formatTime(sec){
-
-const m=String(Math.floor(sec/60)).padStart(2,"0")
-const s=String(sec%60).padStart(2,"0")
-
-return `${m}:${s}`
-
-}
-
-/* PIP */
-
-async function openFloatingPanel(){
-
-if(!("documentPictureInPicture" in window)){
-alert("Sem suporte")
-return
-}
-
-if(pipWindow && !pipWindow.closed) return
-
-pipWindow=await documentPictureInPicture.requestWindow({
-width:300,
-height:330
-})
-
-pipWindow.document.body.innerHTML=`
-
-<style>
-
-body{
-font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-margin:0;
 padding:16px;
-display:flex;
-flex-direction:column;
-}
-
-h3{
-margin:0 0 10px 0;
-font-weight:600;
-}
-
-.timer{
-font-size:26px;
-font-weight:600;
-margin-bottom:10px;
-}
-
-button{
-padding:14px;
 border-radius:10px;
-border:none;
-cursor:pointer;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
 width:100%;
+max-width:420px;
+}
+
+/* botões */
+
+.btn{
+padding:10px 16px;
+margin:4px;
+border:none;
+border-radius:6px;
+cursor:pointer;
 font-size:14px;
 position:relative;
 overflow:hidden;
-margin-top:8px;
+transition:.2s;
 }
 
-button::before{
+.btn-primary{
+background:#2f7df6;
+color:white;
+}
+
+.btn-success{
+background:#18a558;
+color:white;
+}
+
+.btn-danger{
+background:#e53935;
+color:white;
+}
+
+.btn:hover{
+opacity:.9;
+}
+
+/* confirmação */
+
+.btn.confirming{
+background:#555;
+}
+
+.btn.confirming::before{
 content:"";
 position:absolute;
 top:0;
 left:0;
-height:4px;
-width:0%;
-background:rgba(255,255,255,0.9);
-transition:width 3s linear;
-}
-
-button.confirm::before{
+height:3px;
 width:100%;
+background:white;
+animation:loading 2s linear forwards;
 }
 
-.primary{background:#2563eb;color:white}
-.danger{background:#ef4444;color:white}
+@keyframes loading{
+from{width:0%}
+to{width:100%}
+}
 
-.row{
+/* modal */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal.show{
 display:flex;
-gap:8px;
-margin-top:8px;
 }
 
-.row button{
-flex:1;
-margin-top:0;
+.modal-content{
+background:white;
+padding:20px;
+border-radius:10px;
+width:90%;
+max-width:360px;
 }
+
+/* dropdown */
 
 select{
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
 width:100%;
+padding:10px;
 margin-top:10px;
+border-radius:6px;
+border:1px solid #ccc;
 }
-
-.hidden{display:none}
 
 </style>
+</head>
 
-<h3 id="status">Disponível</h3>
+<body>
 
-<div id="timer" class="timer hidden">00:00</div>
+<div class="panel">
 
-<button id="startBtn" class="primary">Atender</button>
+<h3>Atendimento</h3>
 
-<button id="endBtn" class="danger hidden">Encerrar</button>
+<button class="btn btn-primary" id="btnEncerrar">
+Encerrar Atendimento
+</button>
 
-<div id="acw" class="hidden">
-
-<div class="row">
-<button id="retidoBtn" class="primary">Retido</button>
-<button id="canceladoBtn" class="danger">Cancelado</button>
 </div>
 
-<select id="reason" class="hidden">
-<option value="">Motivo cancelamento</option>
-<option>Atendimento</option>
-<option>Produto</option>
-<option>Técnico</option>
-<option>Mudança de endereço</option>
-<option>021</option>
+
+<!-- MODAL -->
+
+<div class="modal" id="modal">
+
+<div class="modal-content" id="modalContent">
+
+<h3>Resultado do atendimento</h3>
+
+<button class="btn btn-success actionBtn" data-type="retido">
+Retido
+</button>
+
+<button class="btn btn-danger actionBtn" data-type="cancelado">
+Cancelado
+</button>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+const modal = document.getElementById("modal")
+const modalContent = document.getElementById("modalContent")
+
+const btnEncerrar = document.getElementById("btnEncerrar")
+
+/* abrir modal */
+
+btnEncerrar.onclick = () => {
+
+resetButtons()
+
+modal.classList.add("show")
+
+}
+
+
+/* clique retido ou cancelado */
+
+document.addEventListener("click",function(e){
+
+if(!e.target.classList.contains("actionBtn")) return
+
+const type = e.target.dataset.type
+
+if(type === "retido"){
+confirmButton(e.target)
+}
+
+if(type === "cancelado"){
+showCancelReasons()
+}
+
+})
+
+
+/* mostrar motivos */
+
+function showCancelReasons(){
+
+modalContent.innerHTML = `
+
+<h3>Motivo do cancelamento</h3>
+
+<select id="motivo">
+
+<option value="">Selecione</option>
+<option>Valor alto</option>
+<option>Cliente insatisfeito</option>
+<option>Problema técnico</option>
+<option>Outro</option>
+
 </select>
 
-</div>
+<button class="btn btn-danger" id="btnConcluir">
+Concluir
+</button>
+
 `
 
-bindPanel()
+document.getElementById("btnConcluir").onclick = function(){
 
-}
+const btn = this
+const motivo = document.getElementById("motivo").value
 
-/* CONFIRM BUTTON */
-
-function startConfirm(btn){
-
-resetConfirm()
-
-confirmButton=btn
-
-btn.classList.add("confirm")
-
-btn.dataset.original=btn.innerText
-btn.innerText="Confirmar"
-
-confirmTimer=setTimeout(resetConfirm,3000)
-
-}
-
-function resetConfirm(){
-
-if(!confirmButton) return
-
-confirmButton.classList.remove("confirm")
-confirmButton.innerText=confirmButton.dataset.original
-
-confirmButton=null
-
-clearTimeout(confirmTimer)
-
-}
-
-/* PANEL */
-
-function bindPanel(){
-
-const doc=pipWindow.document
-
-const status=doc.getElementById("status")
-const timer=doc.getElementById("timer")
-
-const startBtn=doc.getElementById("startBtn")
-const endBtn=doc.getElementById("endBtn")
-
-const acw=doc.getElementById("acw")
-
-const retidoBtn=doc.getElementById("retidoBtn")
-const canceladoBtn=doc.getElementById("canceladoBtn")
-
-const reason=doc.getElementById("reason")
-
-/* ATENDER */
-
-startBtn.onclick=()=>{
-
-callState="atendendo"
-seconds=0
-
-status.textContent="Em atendimento"
-
-startBtn.classList.add("hidden")
-timer.classList.remove("hidden")
-endBtn.classList.remove("hidden")
-
-callInterval=setInterval(()=>{
-seconds++
-timer.textContent=formatTime(seconds)
-},1000)
-
-}
-
-/* ENCERRAR */
-
-endBtn.onclick=()=>{
-
-clearInterval(callInterval)
-
-status.textContent="Finalizar"
-
-endBtn.classList.add("hidden")
-
-acw.classList.remove("hidden")
-
-}
-
-/* RETIDO */
-
-retidoBtn.onclick=()=>{
-
-if(confirmButton===retidoBtn){
-
-addToHistory(formatTime(seconds),"Retido","")
-
-resetPanel()
-
-}else{
-
-startConfirm(retidoBtn)
-
-}
-
-}
-
-/* CANCELADO */
-
-canceladoBtn.onclick=()=>{
-
-if(!reason.value){
-reason.classList.remove("hidden")
+if(!motivo){
+alert("Selecione o motivo")
 return
 }
 
-if(confirmButton===canceladoBtn){
-
-addToHistory(formatTime(seconds),"Cancelado",reason.value)
-
-resetPanel()
-
-}else{
-
-startConfirm(canceladoBtn)
+confirmButton(btn)
 
 }
 
 }
 
-}
 
-/* RESET */
+/* confirmação dinâmica */
 
-function resetPanel(){
+function confirmButton(btn){
 
-const doc=pipWindow.document
+if(btn.classList.contains("confirming")){
 
-seconds=0
-callState="disponivel"
+console.log("AÇÃO CONFIRMADA")
 
-doc.getElementById("status").textContent="Disponível"
-doc.getElementById("timer").textContent="00:00"
+resetButtons()
 
-doc.getElementById("timer").classList.add("hidden")
-doc.getElementById("endBtn").classList.add("hidden")
-doc.getElementById("acw").classList.add("hidden")
-doc.getElementById("reason").classList.add("hidden")
-doc.getElementById("reason").value=""
+modal.classList.remove("show")
 
-doc.getElementById("startBtn").classList.remove("hidden")
-
-resetConfirm()
+return
 
 }
 
-/* AUTO PIP */
+btn.classList.add("confirming")
 
-document.addEventListener("visibilitychange",()=>{
+const original = btn.innerText
 
-if(document.visibilityState==="hidden"){
-openFloatingPanel()
+btn.innerText = "Confirmar"
+
+setTimeout(()=>{
+
+if(btn.classList.contains("confirming")){
+btn.classList.remove("confirming")
+btn.innerText = original
 }
 
+},2000)
+
+}
+
+
+/* reset */
+
+function resetButtons(){
+
+document.querySelectorAll(".btn").forEach(btn=>{
+btn.classList.remove("confirming")
+})
+
+}
+
+
+/* fechar clicando fora */
+
+modal.addEventListener("click",e=>{
+if(e.target === modal){
+modal.classList.remove("show")
+resetButtons()
+}
 })
 
 </script>
