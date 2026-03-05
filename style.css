@@ -70,9 +70,9 @@ content:"";
 position:absolute;
 top:0;
 left:0;
-height:3px;
+height:100%;
 width:100%;
-background:white;
+background:rgba(0, 0, 0, 0.1);
 animation:loadbar 2s linear forwards;
 }
 
