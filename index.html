@@ -24,73 +24,135 @@ margin:auto;
 box-shadow:0 8px 20px rgba(0,0,0,0.05);
 }
 
-h2{margin-top:0;font-weight:600}
-
-input{
-width:100%;
-padding:12px;
-margin-bottom:12px;
-border-radius:8px;
-border:1px solid #ddd;
-}
-
 button{
 padding:14px;
 border-radius:10px;
 border:none;
 cursor:pointer;
-font-weight:500;
 width:100%;
+font-size:14px;
+margin-top:8px;
 }
 
 .primary{background:#2563eb;color:white}
 .danger{background:#ef4444;color:white}
 
-.history-item{
-padding:10px 0;
-border-bottom:1px solid #eee;
-font-size:14px;
+.panel{
+background:white;
+padding:16px;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+margin-top:20px;
+}
+
+.timer{
+font-size:26px;
+font-weight:600;
+margin-bottom:10px;
+}
+
+.row{
+display:flex;
+gap:8px;
+}
+
+.row button{
+flex:1;
+margin-top:0;
+}
+
+/* MODAL */
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.modalCard{
+background:white;
+padding:20px;
+border-radius:12px;
+width:260px;
+}
+
+select{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
+margin-top:10px;
 }
 
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
+
 <div id="loginScreen" class="card">
+
 <h2>Login</h2>
+
 <input placeholder="Usuário">
 <input type="password" placeholder="Senha">
+
 <button class="primary" onclick="login()">Entrar</button>
+
 </div>
 
+<!-- DASHBOARD -->
+
 <div id="dashboard" class="hidden">
+
 <div class="card">
 
 <h2>Retenção</h2>
 
-<button class="primary" onclick="openFloatingPanel()">Abrir painel</button>
+<div id="panelContainer"></div>
 
 <h3 style="margin-top:25px;">Histórico</h3>
+
 <div id="historyList"></div>
 
 </div>
+
+</div>
+
+<!-- MODAL -->
+
+<div id="modal" class="modal hidden">
+
+<div class="modalCard">
+
+<h3 id="modalTitle">Finalizar</h3>
+
+<div id="modalContent"></div>
+
+</div>
+
 </div>
 
 <script>
 
 let pipWindow
-let callInterval
 let seconds=0
-let callState="disponivel"
-
-let confirmTimer=null
-let confirmButton=null
+let interval
 
 let history=[]
 
+/* LOGIN */
+
 function login(){
+
 loginScreen.classList.add("hidden")
 dashboard.classList.remove("hidden")
+
+renderPanel(panelContainer)
+
 }
 
 /* HISTÓRICO */
@@ -102,8 +164,6 @@ historyList.innerHTML=""
 history.forEach(item=>{
 
 const div=document.createElement("div")
-
-div.className="history-item"
 
 div.innerHTML=`
 <strong>${item.result}</strong>
@@ -117,7 +177,7 @@ historyList.appendChild(div)
 
 }
 
-function addToHistory(duration,result,reason){
+function addHistory(duration,result,reason){
 
 history.unshift({
 date:new Date().toLocaleString(),
@@ -141,97 +201,13 @@ return `${m}:${s}`
 
 }
 
-/* PIP */
+/* PANEL */
 
-async function openFloatingPanel(){
+function renderPanel(container){
 
-if(!("documentPictureInPicture" in window)){
-alert("Sem suporte")
-return
-}
+container.innerHTML=`
 
-if(pipWindow && !pipWindow.closed) return
-
-pipWindow=await documentPictureInPicture.requestWindow({
-width:300,
-height:330
-})
-
-pipWindow.document.body.innerHTML=`
-
-<style>
-
-body{
-font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-margin:0;
-padding:16px;
-display:flex;
-flex-direction:column;
-}
-
-h3{
-margin:0 0 10px 0;
-font-weight:600;
-}
-
-.timer{
-font-size:26px;
-font-weight:600;
-margin-bottom:10px;
-}
-
-button{
-padding:14px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-width:100%;
-font-size:14px;
-position:relative;
-overflow:hidden;
-margin-top:8px;
-}
-
-button::before{
-content:"";
-position:absolute;
-top:0;
-left:0;
-height:4px;
-width:0%;
-background:rgba(255,255,255,0.9);
-transition:width 3s linear;
-}
-
-button.confirm::before{
-width:100%;
-}
-
-.primary{background:#2563eb;color:white}
-.danger{background:#ef4444;color:white}
-
-.row{
-display:flex;
-gap:8px;
-margin-top:8px;
-}
-
-.row button{
-flex:1;
-margin-top:0;
-}
-
-select{
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
-width:100%;
-margin-top:10px;
-}
-
-.hidden{display:none}
-
-</style>
+<div class="panel">
 
 <h3 id="status">Disponível</h3>
 
@@ -241,83 +217,24 @@ margin-top:10px;
 
 <button id="endBtn" class="danger hidden">Encerrar</button>
 
-<div id="acw" class="hidden">
-
-<div class="row">
-<button id="retidoBtn" class="primary">Retido</button>
-<button id="canceladoBtn" class="danger">Cancelado</button>
 </div>
 
-<select id="reason" class="hidden">
-<option value="">Motivo cancelamento</option>
-<option>Atendimento</option>
-<option>Produto</option>
-<option>Técnico</option>
-<option>Mudança de endereço</option>
-<option>021</option>
-</select>
-
-</div>
 `
 
-bindPanel()
+bindPanel(container)
 
 }
 
-/* CONFIRM BUTTON */
+function bindPanel(container){
 
-function startConfirm(btn){
+const status=container.querySelector("#status")
+const timer=container.querySelector("#timer")
 
-resetConfirm()
-
-confirmButton=btn
-
-btn.classList.add("confirm")
-
-btn.dataset.original=btn.innerText
-btn.innerText="Confirmar"
-
-confirmTimer=setTimeout(resetConfirm,3000)
-
-}
-
-function resetConfirm(){
-
-if(!confirmButton) return
-
-confirmButton.classList.remove("confirm")
-confirmButton.innerText=confirmButton.dataset.original
-
-confirmButton=null
-
-clearTimeout(confirmTimer)
-
-}
-
-/* PANEL */
-
-function bindPanel(){
-
-const doc=pipWindow.document
-
-const status=doc.getElementById("status")
-const timer=doc.getElementById("timer")
-
-const startBtn=doc.getElementById("startBtn")
-const endBtn=doc.getElementById("endBtn")
-
-const acw=doc.getElementById("acw")
-
-const retidoBtn=doc.getElementById("retidoBtn")
-const canceladoBtn=doc.getElementById("canceladoBtn")
-
-const reason=doc.getElementById("reason")
-
-/* ATENDER */
+const startBtn=container.querySelector("#startBtn")
+const endBtn=container.querySelector("#endBtn")
 
 startBtn.onclick=()=>{
 
-callState="atendendo"
 seconds=0
 
 status.textContent="Em atendimento"
@@ -326,40 +243,64 @@ startBtn.classList.add("hidden")
 timer.classList.remove("hidden")
 endBtn.classList.remove("hidden")
 
-callInterval=setInterval(()=>{
+interval=setInterval(()=>{
+
 seconds++
 timer.textContent=formatTime(seconds)
+
 },1000)
 
 }
 
-/* ENCERRAR */
-
 endBtn.onclick=()=>{
 
-clearInterval(callInterval)
+openFinishModal()
 
-status.textContent="Finalizar"
+}
 
-endBtn.classList.add("hidden")
+}
 
-acw.classList.remove("hidden")
+/* MODAL */
+
+function openFinishModal(){
+
+modal.classList.remove("hidden")
+
+modalTitle.textContent="Finalizar atendimento"
+
+modalContent.innerHTML=`
+
+<div class="row">
+
+<button id="retidoBtn" class="primary">Retido</button>
+
+<button id="cancelBtn" class="danger">Cancelado</button>
+
+</div>
+
+`
+
+document.getElementById("retidoBtn").onclick=()=>confirmRetido()
+
+document.getElementById("cancelBtn").onclick=()=>showCancelReasons()
 
 }
 
 /* RETIDO */
 
-retidoBtn.onclick=()=>{
+function confirmRetido(){
 
-if(confirmButton===retidoBtn){
+modalContent.innerHTML=`
 
-addToHistory(formatTime(seconds),"Retido","")
+<p>Confirmar retenção?</p>
 
-resetPanel()
+<button class="primary" id="confirm">Confirmar</button>
 
-}else{
+`
 
-startConfirm(retidoBtn)
+document.getElementById("confirm").onclick=()=>{
+
+finishCall("Retido","")
 
 }
 
@@ -367,59 +308,78 @@ startConfirm(retidoBtn)
 
 /* CANCELADO */
 
-canceladoBtn.onclick=()=>{
+function showCancelReasons(){
 
-if(!reason.value){
-reason.classList.remove("hidden")
-return
+modalTitle.textContent="Motivo cancelamento"
+
+modalContent.innerHTML=`
+
+<select id="reason">
+
+<option value="">Selecione</option>
+<option>Atendimento</option>
+<option>Produto</option>
+<option>Técnico</option>
+<option>Mudança de endereço</option>
+<option>021</option>
+
+</select>
+
+<button class="danger" id="finish">Concluir</button>
+
+`
+
+document.getElementById("finish").onclick=()=>{
+
+const reason=document.getElementById("reason").value
+
+if(!reason) return
+
+finishCall("Cancelado",reason)
+
 }
 
-if(confirmButton===canceladoBtn){
-
-addToHistory(formatTime(seconds),"Cancelado",reason.value)
-
-resetPanel()
-
-}else{
-
-startConfirm(canceladoBtn)
-
 }
 
-}
+/* FINALIZAR */
 
-}
+function finishCall(result,reason){
 
-/* RESET */
+clearInterval(interval)
 
-function resetPanel(){
-
-const doc=pipWindow.document
+addHistory(formatTime(seconds),result,reason)
 
 seconds=0
-callState="disponivel"
 
-doc.getElementById("status").textContent="Disponível"
-doc.getElementById("timer").textContent="00:00"
+modal.classList.add("hidden")
 
-doc.getElementById("timer").classList.add("hidden")
-doc.getElementById("endBtn").classList.add("hidden")
-doc.getElementById("acw").classList.add("hidden")
-doc.getElementById("reason").classList.add("hidden")
-doc.getElementById("reason").value=""
-
-doc.getElementById("startBtn").classList.remove("hidden")
-
-resetConfirm()
+renderPanel(panelContainer)
 
 }
 
-/* AUTO PIP */
+/* PIP */
+
+async function movePanelToPip(){
+
+if(!("documentPictureInPicture" in window)) return
+
+pipWindow=await documentPictureInPicture.requestWindow({
+width:280,
+height:220
+})
+
+renderPanel(pipWindow.document.body)
+
+}
+
+/* DETECTAR SAÍDA DA ABA */
 
 document.addEventListener("visibilitychange",()=>{
 
 if(document.visibilityState==="hidden"){
-openFloatingPanel()
+
+movePanelToPip()
+
 }
 
 })
