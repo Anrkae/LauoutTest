@@ -1,343 +1,222 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel Retenção</title>
 
 <style>
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-    padding: 30px;
+
+body{
+font-family:Arial, Helvetica, sans-serif;
+background:#f4f6f8;
+margin:0;
+padding:10px;
 }
 
-.hidden { display: none; }
+/* CARD */
 
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 14px;
-    max-width: 500px;
-    margin: auto;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+.modal{
+background:white;
+border-radius:12px;
+padding:16px;
+box-shadow:0 5px 18px rgba(0,0,0,0.12);
+max-width:320px;
+margin:auto;
 }
 
-h2 { margin-top: 0; font-weight: 600; }
-
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
+.modal h3{
+margin:0 0 12px 0;
+font-size:15px;
+text-align:center;
 }
 
-button {
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    width: 100%;
+/* DROPDOWN */
+
+.dropdown{
+margin-bottom:12px;
 }
 
-.primary { background: #2563eb; color: white; }
-.danger { background: #ef4444; color: white; }
-
-#historyList { margin-top: 20px; }
-
-.history-item {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
+select{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
+font-size:14px;
+background:white;
 }
+
+/* BUTTON GROUP */
+
+.button-group{
+display:flex;
+gap:10px;
+}
+
+.btn{
+flex:1;
+border:none;
+border-radius:8px;
+padding:12px;
+font-weight:bold;
+cursor:pointer;
+position:relative;
+overflow:hidden;
+transition:.2s;
+}
+
+.btn span{
+display:block;
+padding:2px;
+}
+
+.btn-retido{
+background:#2ecc71;
+color:white;
+}
+
+.btn-cancelado{
+background:#e74c3c;
+color:white;
+}
+
+/* confirmação */
+
+.btn::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+height:4px;
+width:0%;
+background:rgba(255,255,255,0.9);
+transition:width .6s linear;
+}
+
+.btn.confirm::before{
+width:100%;
+}
+
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen" class="card">
-    <h2>Login</h2>
-    <input placeholder="Usuário">
-    <input type="password" placeholder="Senha">
-    <button class="primary" onclick="login()">Entrar</button>
+<div class="modal">
+
+<h3>Finalizar Atendimento</h3>
+
+<div class="dropdown">
+<select id="cancelReason">
+
+<option value="">Motivo do cancelamento</option>
+<option value="Atendimento">Atendimento</option>
+<option value="Produto">Produto</option>
+<option value="Técnico">Técnico</option>
+<option value="Mudança de endereço">Mudança de endereço</option>
+<option value="021">Cancelamento 021</option>
+
+</select>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
-    <div class="card">
-        <h2>Retenção</h2>
-        <button class="primary" onclick="openFloatingPanel()">Abrir painel</button>
+<div class="button-group">
 
-        <h3 style="margin-top:25px;">Histórico</h3>
-        <div id="historyList"></div>
-    </div>
+<button class="btn btn-retido" id="btnRetido">
+<span>Retido</span>
+</button>
+
+<button class="btn btn-cancelado" id="btnCancelado">
+<span>Cancelado</span>
+</button>
+
+</div>
+
 </div>
 
 <script>
-let pipWindow = null;
-let callInterval = null;
-let seconds = 0;
-let callState = "disponivel";
 
-let selectedResult = null;
-let history = [];
+let confirmButton=null
+let timeout=null
 
-/* LOGIN */
+function resetConfirm(){
 
-function login() {
-    loginScreen.classList.add("hidden");
-    dashboard.classList.remove("hidden");
+document.querySelectorAll(".btn").forEach(btn=>{
+btn.classList.remove("confirm")
+btn.querySelector("span").innerText =
+btn.id==="btnRetido" ? "Retido" : "Cancelado"
+})
+
+confirmButton=null
+
 }
 
-/* HISTÓRICO */
+function activateConfirm(button){
 
-function renderHistory() {
-    historyList.innerHTML = "";
-    history.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.innerHTML =
-            `<strong>${item.result}</strong>
-             ${item.reason ? " • " + item.reason : ""}
-             <br><small>${item.duration} • ${item.date}</small>`;
-        historyList.appendChild(div);
-    });
+resetConfirm()
+
+confirmButton=button
+
+button.classList.add("confirm")
+button.querySelector("span").innerText="Confirmar"
+
+timeout=setTimeout(()=>{
+resetConfirm()
+},3000)
+
 }
 
-function addToHistory(duration, result, reason) {
-    history.unshift({
-        date: new Date().toLocaleString(),
-        duration,
-        result,
-        reason
-    });
-    renderHistory();
+/* RETIDO */
+
+document.getElementById("btnRetido").onclick=function(){
+
+if(confirmButton===this){
+
+alert("Cliente RETIDO")
+
+resetConfirm()
+
+}else{
+
+activateConfirm(this)
+
 }
 
-/* TIMER */
-
-function formatTime(sec) {
-    const min = String(Math.floor(sec / 60)).padStart(2, "0");
-    const s = String(sec % 60).padStart(2, "0");
-    return `${min}:${s}`;
 }
 
-/* FLOATING PANEL */
+/* CANCELADO */
 
-async function openFloatingPanel() {
+document.getElementById("btnCancelado").onclick=function(){
 
-    if (!("documentPictureInPicture" in window)) {
-        alert("Sem suporte.");
-        return;
-    }
+const reason=document.getElementById("cancelReason").value
 
-    if (pipWindow && !pipWindow.closed) return;
-
-    pipWindow = await window.documentPictureInPicture.requestWindow({
-        width: 300,
-        height: 300
-    });
-
-    pipWindow.document.body.innerHTML = `
-        <style>
-            body {
-                font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-                background:white;
-                margin:0;
-                padding:16px;
-                display:flex;
-                flex-direction:column;
-                gap:12px;
-            }
-
-            h3 { margin:0; font-weight:600; }
-
-            .timer {
-                font-size:28px;
-                font-weight:600;
-            }
-
-            button {
-                padding:12px;
-                border-radius:10px;
-                border:none;
-                cursor:pointer;
-                font-size:14px;
-                width:100%;
-            }
-
-            .primary { background:#2563eb; color:white; }
-            .danger { background:#ef4444; color:white; }
-
-            .row {
-                display:flex;
-                gap:8px;
-                width:100%;
-            }
-
-            .row button {
-                flex:1;
-            }
-
-            select {
-                width:100%;
-                padding:10px;
-                border-radius:8px;
-                border:1px solid #ddd;
-            }
-
-            .hidden { display:none; }
-        </style>
-
-        <h3 id="statusTitle">Disponível</h3>
-
-        <div id="timer" class="timer hidden">00:00</div>
-
-        <button id="startBtn" class="primary">Atender</button>
-        <button id="endBtn" class="danger hidden">Encerrar</button>
-
-        <div id="acwArea" class="hidden">
-
-            <div class="row">
-                <button id="retidoBtn" class="primary">Retido</button>
-                <button id="canceladoBtn" class="danger">Cancelado</button>
-            </div>
-
-            <select id="reasonSelect" class="hidden">
-                <option value="">Selecione o motivo</option>
-                <option>Atendimento</option>
-                <option>Produto</option>
-                <option>Técnico</option>
-                <option>Mudança de endereço</option>
-                <option>021</option>
-            </select>
-
-            <button id="confirmBtn" class="primary hidden">
-                Confirmar
-            </button>
-        </div>
-    `;
-
-    bindPanel();
+if(!reason){
+alert("Selecione o motivo do cancelamento")
+return
 }
 
-function bindPanel() {
+if(confirmButton===this){
 
-    const doc = pipWindow.document;
+alert("Cliente CANCELADO: "+reason)
 
-    const statusTitle = doc.getElementById("statusTitle");
-    const timer = doc.getElementById("timer");
-    const startBtn = doc.getElementById("startBtn");
-    const endBtn = doc.getElementById("endBtn");
-    const acwArea = doc.getElementById("acwArea");
-    const retidoBtn = doc.getElementById("retidoBtn");
-    const canceladoBtn = doc.getElementById("canceladoBtn");
-    const reasonSelect = doc.getElementById("reasonSelect");
-    const confirmBtn = doc.getElementById("confirmBtn");
+resetConfirm()
 
-    /* ATENDER */
+}else{
 
-    startBtn.onclick = () => {
+activateConfirm(this)
 
-        callState = "atendendo";
-        seconds = 0;
-
-        statusTitle.textContent = "Em atendimento";
-
-        startBtn.classList.add("hidden");
-        timer.classList.remove("hidden");
-        endBtn.classList.remove("hidden");
-
-        callInterval = setInterval(() => {
-            seconds++;
-            timer.textContent = formatTime(seconds);
-        }, 1000);
-    };
-
-    /* ENCERRAR */
-
-    endBtn.onclick = () => {
-
-        clearInterval(callInterval);
-        callState = "acw";
-
-        statusTitle.textContent = "Finalizar";
-        endBtn.classList.add("hidden");
-
-        acwArea.classList.remove("hidden");
-    };
-
-    /* RETIDO */
-
-    retidoBtn.onclick = () => {
-        selectedResult = "Retido";
-        reasonSelect.classList.add("hidden");
-        confirmBtn.classList.remove("hidden");
-    };
-
-    /* CANCELADO */
-
-    canceladoBtn.onclick = () => {
-        selectedResult = "Cancelado";
-        reasonSelect.classList.remove("hidden");
-        confirmBtn.classList.add("hidden");
-    };
-
-    /* MOTIVO */
-
-    reasonSelect.onchange = () => {
-        if (reasonSelect.value) {
-            confirmBtn.classList.remove("hidden");
-        } else {
-            confirmBtn.classList.add("hidden");
-        }
-    };
-
-    /* CONFIRMAR */
-
-    confirmBtn.onclick = () => {
-
-        if (!selectedResult) return;
-
-        if (selectedResult === "Cancelado" && !reasonSelect.value) return;
-
-        addToHistory(
-            formatTime(seconds),
-            selectedResult,
-            selectedResult === "Retido" ? "" : reasonSelect.value
-        );
-
-        resetPanel();
-    };
 }
 
-function resetPanel() {
-
-    const doc = pipWindow.document;
-
-    seconds = 0;
-    callState = "disponivel";
-    selectedResult = null;
-
-    doc.getElementById("statusTitle").textContent = "Disponível";
-    doc.getElementById("timer").textContent = "00:00";
-
-    doc.getElementById("timer").classList.add("hidden");
-    doc.getElementById("endBtn").classList.add("hidden");
-    doc.getElementById("acwArea").classList.add("hidden");
-    doc.getElementById("reasonSelect").classList.add("hidden");
-    doc.getElementById("confirmBtn").classList.add("hidden");
-
-    doc.getElementById("startBtn").classList.remove("hidden");
 }
 
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-        openFloatingPanel();
-    }
-});
+/* cancelar confirmação clicando fora */
+
+document.addEventListener("click",(e)=>{
+
+if(!e.target.closest(".btn")){
+resetConfirm()
+}
+
+})
+
 </script>
 
 </body>
