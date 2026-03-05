@@ -24,27 +24,89 @@ margin:auto;
 box-shadow:0 8px 20px rgba(0,0,0,0.05);
 }
 
-h2{margin-top:0;font-weight:600}
-
-input{
-width:100%;
-padding:12px;
-margin-bottom:12px;
-border-radius:8px;
-border:1px solid #ddd;
-}
-
 button{
-padding:14px;
+padding:12px;
 border-radius:10px;
 border:none;
 cursor:pointer;
 font-weight:500;
 width:100%;
+position:relative;
+overflow:hidden;
+margin-top:8px;
+}
+
+button::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+height:4px;
+width:0%;
+background:rgba(255,255,255,0.9);
+transition:width 2.5s linear;
+}
+
+button.confirm::before{
+width:100%;
 }
 
 .primary{background:#2563eb;color:white}
 .danger{background:#ef4444;color:white}
+
+.row{
+display:flex;
+gap:8px;
+margin-top:8px;
+}
+
+.row button{
+flex:1;
+}
+
+.timer{
+font-size:26px;
+font-weight:600;
+margin:10px 0;
+}
+
+.panel{
+background:white;
+border-radius:12px;
+padding:14px;
+margin-top:20px;
+max-width:300px;
+box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+select{
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
+width:100%;
+margin-top:10px;
+}
+
+/* MODAL */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.35);
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.modal-box{
+background:white;
+padding:18px;
+border-radius:12px;
+width:260px;
+}
 
 .history-item{
 padding:10px 0;
@@ -56,6 +118,8 @@ font-size:14px;
 </head>
 <body>
 
+<!-- LOGIN -->
+
 <div id="loginScreen" class="card">
 <h2>Login</h2>
 <input placeholder="Usuário">
@@ -63,12 +127,17 @@ font-size:14px;
 <button class="primary" onclick="login()">Entrar</button>
 </div>
 
+<!-- DASHBOARD -->
+
 <div id="dashboard" class="hidden">
+
 <div class="card">
 
 <h2>Retenção</h2>
 
 <button class="primary" onclick="openFloatingPanel()">Abrir painel</button>
+
+<div id="panelContainer"></div>
 
 <h3 style="margin-top:25px;">Histórico</h3>
 <div id="historyList"></div>
@@ -76,21 +145,57 @@ font-size:14px;
 </div>
 </div>
 
+<!-- MODAL -->
+
+<div id="modal" class="modal hidden">
+
+<div class="modal-box">
+
+<div id="modalStep1">
+
+<div class="row">
+<button id="retidoBtn" class="primary">Retido</button>
+<button id="canceladoBtn" class="danger">Cancelado</button>
+</div>
+
+</div>
+
+<div id="modalStep2" class="hidden">
+
+<select id="reason">
+<option value="">Motivo cancelamento</option>
+<option>Atendimento</option>
+<option>Produto</option>
+<option>Técnico</option>
+<option>Mudança de endereço</option>
+<option>021</option>
+</select>
+
+<button id="confirmCancel" class="danger">Concluir</button>
+
+</div>
+
+</div>
+
+</div>
+
 <script>
 
 let pipWindow
 let callInterval
 let seconds=0
-let callState="disponivel"
 
-let confirmTimer=null
 let confirmButton=null
+let confirmTimer=null
 
 let history=[]
+
+/* LOGIN */
 
 function login(){
 loginScreen.classList.add("hidden")
 dashboard.classList.remove("hidden")
+renderPanel()
 }
 
 /* HISTÓRICO */
@@ -141,129 +246,6 @@ return `${m}:${s}`
 
 }
 
-/* PIP */
-
-async function openFloatingPanel(){
-
-if(!("documentPictureInPicture" in window)){
-alert("Sem suporte")
-return
-}
-
-if(pipWindow && !pipWindow.closed) return
-
-pipWindow=await documentPictureInPicture.requestWindow({
-width:300,
-height:330
-})
-
-pipWindow.document.body.innerHTML=`
-
-<style>
-
-body{
-font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-margin:0;
-padding:16px;
-display:flex;
-flex-direction:column;
-}
-
-h3{
-margin:0 0 10px 0;
-font-weight:600;
-}
-
-.timer{
-font-size:26px;
-font-weight:600;
-margin-bottom:10px;
-}
-
-button{
-padding:14px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-width:100%;
-font-size:14px;
-position:relative;
-overflow:hidden;
-margin-top:8px;
-}
-
-button::before{
-content:"";
-position:absolute;
-top:0;
-left:0;
-height:4px;
-width:0%;
-background:rgba(255,255,255,0.9);
-transition:width 3s linear;
-}
-
-button.confirm::before{
-width:100%;
-}
-
-.primary{background:#2563eb;color:white}
-.danger{background:#ef4444;color:white}
-
-.row{
-display:flex;
-gap:8px;
-margin-top:8px;
-}
-
-.row button{
-flex:1;
-margin-top:0;
-}
-
-select{
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
-width:100%;
-margin-top:10px;
-}
-
-.hidden{display:none}
-
-</style>
-
-<h3 id="status">Disponível</h3>
-
-<div id="timer" class="timer hidden">00:00</div>
-
-<button id="startBtn" class="primary">Atender</button>
-
-<button id="endBtn" class="danger hidden">Encerrar</button>
-
-<div id="acw" class="hidden">
-
-<div class="row">
-<button id="retidoBtn" class="primary">Retido</button>
-<button id="canceladoBtn" class="danger">Cancelado</button>
-</div>
-
-<select id="reason" class="hidden">
-<option value="">Motivo cancelamento</option>
-<option>Atendimento</option>
-<option>Produto</option>
-<option>Técnico</option>
-<option>Mudança de endereço</option>
-<option>021</option>
-</select>
-
-</div>
-`
-
-bindPanel()
-
-}
-
 /* CONFIRM BUTTON */
 
 function startConfirm(btn){
@@ -273,11 +255,10 @@ resetConfirm()
 confirmButton=btn
 
 btn.classList.add("confirm")
-
 btn.dataset.original=btn.innerText
 btn.innerText="Confirmar"
 
-confirmTimer=setTimeout(resetConfirm,3000)
+confirmTimer=setTimeout(resetConfirm,2500)
 
 }
 
@@ -289,16 +270,37 @@ confirmButton.classList.remove("confirm")
 confirmButton.innerText=confirmButton.dataset.original
 
 confirmButton=null
-
 clearTimeout(confirmTimer)
 
 }
 
 /* PANEL */
 
-function bindPanel(){
+function renderPanel(){
 
-const doc=pipWindow.document
+panelContainer.innerHTML=`
+
+<div class="panel">
+
+<h3 id="status">Disponível</h3>
+
+<div id="timer" class="timer hidden">00:00</div>
+
+<button id="startBtn" class="primary">Atender</button>
+
+<button id="endBtn" class="danger hidden">Encerrar</button>
+
+</div>
+
+`
+
+bindPanel(document)
+
+}
+
+/* PANEL LOGIC */
+
+function bindPanel(doc){
 
 const status=doc.getElementById("status")
 const timer=doc.getElementById("timer")
@@ -306,18 +308,8 @@ const timer=doc.getElementById("timer")
 const startBtn=doc.getElementById("startBtn")
 const endBtn=doc.getElementById("endBtn")
 
-const acw=doc.getElementById("acw")
-
-const retidoBtn=doc.getElementById("retidoBtn")
-const canceladoBtn=doc.getElementById("canceladoBtn")
-
-const reason=doc.getElementById("reason")
-
-/* ATENDER */
-
 startBtn.onclick=()=>{
 
-callState="atendendo"
 seconds=0
 
 status.textContent="Em atendimento"
@@ -333,29 +325,26 @@ timer.textContent=formatTime(seconds)
 
 }
 
-/* ENCERRAR */
-
 endBtn.onclick=()=>{
 
 clearInterval(callInterval)
 
-status.textContent="Finalizar"
+status.textContent="Finalizando"
 
-endBtn.classList.add("hidden")
-
-acw.classList.remove("hidden")
+modal.classList.remove("hidden")
 
 }
 
-/* RETIDO */
+}
+
+/* MODAL */
 
 retidoBtn.onclick=()=>{
 
 if(confirmButton===retidoBtn){
 
 addToHistory(formatTime(seconds),"Retido","")
-
-resetPanel()
+closeModal()
 
 }else{
 
@@ -365,28 +354,46 @@ startConfirm(retidoBtn)
 
 }
 
-/* CANCELADO */
-
 canceladoBtn.onclick=()=>{
 
+modalStep1.classList.add("hidden")
+modalStep2.classList.remove("hidden")
+
+}
+
+confirmCancel.onclick=()=>{
+
 if(!reason.value){
-reason.classList.remove("hidden")
+alert("Selecione o motivo")
 return
 }
 
-if(confirmButton===canceladoBtn){
+if(confirmButton===confirmCancel){
 
 addToHistory(formatTime(seconds),"Cancelado",reason.value)
 
-resetPanel()
+closeModal()
 
 }else{
 
-startConfirm(canceladoBtn)
+startConfirm(confirmCancel)
 
 }
 
 }
+
+/* CLOSE */
+
+function closeModal(){
+
+modal.classList.add("hidden")
+
+modalStep1.classList.remove("hidden")
+modalStep2.classList.add("hidden")
+
+reason.value=""
+
+resetPanel()
 
 }
 
@@ -394,23 +401,45 @@ startConfirm(canceladoBtn)
 
 function resetPanel(){
 
-const doc=pipWindow.document
-
 seconds=0
-callState="disponivel"
 
-doc.getElementById("status").textContent="Disponível"
-doc.getElementById("timer").textContent="00:00"
+const status=document.getElementById("status")
+const timer=document.getElementById("timer")
+const startBtn=document.getElementById("startBtn")
+const endBtn=document.getElementById("endBtn")
 
-doc.getElementById("timer").classList.add("hidden")
-doc.getElementById("endBtn").classList.add("hidden")
-doc.getElementById("acw").classList.add("hidden")
-doc.getElementById("reason").classList.add("hidden")
-doc.getElementById("reason").value=""
+status.textContent="Disponível"
 
-doc.getElementById("startBtn").classList.remove("hidden")
+timer.textContent="00:00"
+
+timer.classList.add("hidden")
+endBtn.classList.add("hidden")
+
+startBtn.classList.remove("hidden")
 
 resetConfirm()
+
+}
+
+/* PIP */
+
+async function openFloatingPanel(){
+
+if(!("documentPictureInPicture" in window)){
+alert("Sem suporte")
+return
+}
+
+if(pipWindow && !pipWindow.closed) return
+
+pipWindow=await documentPictureInPicture.requestWindow({
+width:300,
+height:320
+})
+
+pipWindow.document.body.innerHTML=panelContainer.innerHTML
+
+bindPanel(pipWindow.document)
 
 }
 
