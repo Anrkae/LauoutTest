@@ -154,7 +154,7 @@ if(pipWindow && !pipWindow.closed) return
 
 pipWindow=await documentPictureInPicture.requestWindow({
 width:300,
-height:320
+height:330
 })
 
 pipWindow.document.body.innerHTML=`
@@ -167,17 +167,17 @@ margin:0;
 padding:16px;
 display:flex;
 flex-direction:column;
-gap:12px;
 }
 
 h3{
-margin:0;
+margin:0 0 10px 0;
 font-weight:600;
 }
 
 .timer{
 font-size:26px;
 font-weight:600;
+margin-bottom:10px;
 }
 
 button{
@@ -189,6 +189,7 @@ width:100%;
 font-size:14px;
 position:relative;
 overflow:hidden;
+margin-top:8px;
 }
 
 button::before{
@@ -211,11 +212,13 @@ width:100%;
 
 .row{
 display:flex;
-gap:10px;
+gap:8px;
+margin-top:8px;
 }
 
 .row button{
 flex:1;
+margin-top:0;
 }
 
 select{
@@ -223,6 +226,7 @@ padding:10px;
 border-radius:8px;
 border:1px solid #ddd;
 width:100%;
+margin-top:10px;
 }
 
 .hidden{display:none}
@@ -240,22 +244,17 @@ width:100%;
 <div id="acw" class="hidden">
 
 <div class="row">
-
 <button id="retidoBtn" class="primary">Retido</button>
-
 <button id="canceladoBtn" class="danger">Cancelado</button>
-
 </div>
 
 <select id="reason" class="hidden">
-
 <option value="">Motivo cancelamento</option>
 <option>Atendimento</option>
 <option>Produto</option>
 <option>Técnico</option>
 <option>Mudança de endereço</option>
 <option>021</option>
-
 </select>
 
 </div>
