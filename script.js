@@ -5,13 +5,29 @@ let seconds=0
 let selectedResult=null
 let history=[]
 
+let matricula=null
+
 
 /* LOGIN */
 
 function login(){
 
+const input = document.getElementById("matriculaInput")
+
+if(!input.value.trim()){
+
+alert("Digite a matrícula")
+return
+
+}
+
+matricula = input.value.trim()
+
 loginScreen.classList.add("hidden")
 dashboard.classList.remove("hidden")
+
+document.getElementById("operatorInfo").innerText =
+"Operador: " + matricula
 
 }
 
@@ -31,7 +47,7 @@ div.className="history-item"
 div.innerHTML=
 `<strong>${item.result}</strong>
 ${item.reason?" • "+item.reason:""}
-<br><small>${item.duration} • ${item.date}</small>`
+<br><small>${item.duration} • ${item.date} ${item.time}</small>`
 
 historyList.appendChild(div)
 
@@ -40,18 +56,33 @@ historyList.appendChild(div)
 }
 
 
+/* SALVAR HISTÓRICO */
+
 function addToHistory(duration,result,reason){
 
-history.unshift({
+const now = new Date()
 
-date:new Date().toLocaleString(),
-duration,
-result,
-reason
+const data = {
 
-})
+date: now.toLocaleDateString(),
+time: now.toLocaleTimeString(),
+duration: duration,
+result: result,
+reason: reason,
+timestamp: now.getTime(),
+operator: matricula
+
+}
+
+history.unshift(data)
 
 renderHistory()
+
+if(window.salvarAtendimento){
+
+salvarAtendimento(matricula,data)
+
+}
 
 }
 
@@ -68,7 +99,7 @@ return `${min}:${s}`
 }
 
 
-/* CONFIRMAÇÃO DINÂMICA */
+/* CONFIRMAR */
 
 function confirmAction(btn,callback){
 
@@ -95,7 +126,7 @@ btn.textContent=original
 }
 
 
-/* FLOAT PANEL */
+/* ABRIR FLOAT PANEL */
 
 async function openFloatingPanel(){
 
@@ -143,15 +174,12 @@ border:none;
 cursor:pointer;
 font-size:14px;
 width:100%;
-margin-top:4px;
-position:relative;
-overflow:hidden;
 }
 
 .primary{background:#2563eb;color:white;}
 .danger{background:#ef4444;color:white;}
 
-.row{display:flex;gap:8px;margin-top:6px;}
+.row{display:flex;gap:8px;}
 .row button{flex:1;}
 
 select{
@@ -159,26 +187,9 @@ width:100%;
 padding:10px;
 border-radius:8px;
 border:1px solid #ddd;
-margin-top:6px;
 }
 
 .hidden{display:none;}
-
-.confirming::before{
-content:"";
-position:absolute;
-top:0;
-left:0;
-height:100%;
-width:100%;
-background:rgba(0, 0, 0, 0.1);
-animation:loadbar 2s linear forwards;
-}
-
-@keyframes loadbar{
-from{width:0%}
-to{width:100%}
-}
 
 </style>
 
@@ -221,7 +232,7 @@ bindPanel()
 }
 
 
-/* BIND */
+/* BIND PANEL */
 
 function bindPanel(){
 
@@ -241,8 +252,6 @@ const canceladoBtn=doc.getElementById("canceladoBtn")
 const reasonSelect=doc.getElementById("reasonSelect")
 const confirmBtn=doc.getElementById("confirmBtn")
 
-
-/* ATENDER */
 
 startBtn.onclick=()=>{
 
@@ -264,8 +273,6 @@ timer.textContent=formatTime(seconds)
 }
 
 
-/* ENCERRAR */
-
 endBtn.onclick=()=>{
 
 clearInterval(callInterval)
@@ -278,8 +285,6 @@ resultArea.classList.remove("hidden")
 
 }
 
-
-/* RETIDO */
 
 retidoBtn.onclick=()=>{
 
@@ -302,8 +307,6 @@ resetPanel()
 }
 
 
-/* CANCELADO */
-
 canceladoBtn.onclick=()=>{
 
 selectedResult="Cancelado"
@@ -313,8 +316,6 @@ confirmBtn.classList.remove("hidden")
 
 }
 
-
-/* CONCLUIR */
 
 confirmBtn.onclick=()=>{
 
@@ -340,6 +341,8 @@ resetPanel()
 /* RESET */
 
 function resetPanel(){
+
+clearInterval(callInterval)
 
 const doc=pipWindow.document
 

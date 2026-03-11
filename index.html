@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta charset="UTF-8">
@@ -8,15 +9,16 @@
 <link rel="stylesheet" href="style.css">
 
 </head>
+
 <body>
 
 <!-- LOGIN -->
 
 <div id="loginScreen" class="card">
+
 <h2>Login</h2>
 
-<input placeholder="Usuário">
-<input type="password" placeholder="Senha">
+<input id="matriculaInput" placeholder="Matrícula">
 
 <button class="primary" onclick="login()">Entrar</button>
 
@@ -29,7 +31,9 @@
 
 <div class="card">
 
-<h2>Retenção</h2>
+<h2>Painel Retenção</h2>
+
+<div id="operatorInfo"></div>
 
 <button class="primary" onclick="openFloatingPanel()">
 Abrir painel
@@ -43,7 +47,7 @@ Abrir painel
 
 </div>
 
-
+<script type="module" src="firebase.js"></script>
 <script src="script.js"></script>
 
 </body>
