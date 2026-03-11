@@ -4,7 +4,8 @@ import {
   getFirestore,
   collection,
   doc,
-  addDoc
+  addDoc,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 
@@ -24,7 +25,7 @@ const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
 
 
-/* GERAR DATA */
+/* GERAR DATA DO DIA */
 
 function getTodayId() {
   
@@ -66,4 +67,44 @@ async function salvarAtendimento(matricula, data) {
 }
 
 
+/* BUSCAR LIGAÇÕES DO DIA */
+
+async function buscarLigacoes(matricula) {
+  
+  try {
+    
+    const today = getTodayId()
+    
+    const dayDoc = doc(db, "atendimentos", today)
+    
+    const operadorDoc = doc(dayDoc, "operadores", matricula)
+    
+    const ligacoes = collection(operadorDoc, "ligacoes")
+    
+    const snapshot = await getDocs(ligacoes)
+    
+    let lista = []
+    
+    snapshot.forEach((doc) => {
+      
+      lista.push(doc.data())
+      
+    })
+    
+    return lista
+    
+  } catch (e) {
+    
+    console.error("Erro ao buscar ligações:", e)
+    
+    return []
+    
+  }
+  
+}
+
+
+/* EXPORTAR FUNÇÕES PARA O SISTEMA */
+
 window.salvarAtendimento = salvarAtendimento
+window.buscarLigacoes = buscarLigacoes
