@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
 
 
-/* GERAR DATA DO DIA */
+/* DATA DO DIA */
 
 function getTodayId() {
   
@@ -56,7 +56,7 @@ async function salvarAtendimento(matricula, data) {
     
     await addDoc(ligacoes, data)
     
-    console.log("Ligação salva no Firebase")
+    console.log("Ligação salva")
     
   } catch (e) {
     
@@ -85,7 +85,7 @@ async function buscarLigacoes(matricula) {
     
     let lista = []
     
-    snapshot.forEach((doc) => {
+    snapshot.forEach(doc => {
       
       lista.push(doc.data())
       
@@ -95,7 +95,7 @@ async function buscarLigacoes(matricula) {
     
   } catch (e) {
     
-    console.error("Erro ao buscar ligações:", e)
+    console.error("Erro ao buscar:", e)
     
     return []
     
@@ -103,8 +103,6 @@ async function buscarLigacoes(matricula) {
   
 }
 
-
-/* EXPORTAR FUNÇÕES PARA O SISTEMA */
 
 window.salvarAtendimento = salvarAtendimento
 window.buscarLigacoes = buscarLigacoes

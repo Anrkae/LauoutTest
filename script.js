@@ -10,7 +10,7 @@ let matricula=null
 
 /* LOGIN */
 
-function login(){
+async function login(){
 
 const input = document.getElementById("matriculaInput")
 
@@ -28,6 +28,23 @@ dashboard.classList.remove("hidden")
 
 document.getElementById("operatorInfo").innerText =
 "Operador: " + matricula
+
+
+/* BUSCAR LIGAÇÕES DO DIA */
+
+if(window.buscarLigacoes){
+
+const ligacoes = await buscarLigacoes(matricula)
+
+history = []
+
+ligacoes.forEach(l => history.push(l))
+
+history.sort((a,b)=>b.timestamp-a.timestamp)
+
+renderHistory()
+
+}
 
 }
 
@@ -126,7 +143,7 @@ btn.textContent=original
 }
 
 
-/* ABRIR FLOAT PANEL */
+/* ABRIR PAINEL */
 
 async function openFloatingPanel(){
 
@@ -232,7 +249,7 @@ bindPanel()
 }
 
 
-/* BIND PANEL */
+/* BIND */
 
 function bindPanel(){
 
