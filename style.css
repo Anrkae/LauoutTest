@@ -14,7 +14,7 @@ display:none;
 background:#2c2c2c;
 padding:25px;
 border-radius:14px;
-max-width:500px;
+max-width:900px;
 margin:auto;
 box-shadow:0 8px 20px rgba(0,0,0,0.05);
 }
@@ -60,7 +60,7 @@ color:white;
 }
 
 .stats-card {
-  height: 220px;
+  height: 40px;
   aspect-ratio:18/9;
   background: rgba(255, 255, 255, 0.1);
   border-left: 4px solid red;
