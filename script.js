@@ -70,6 +70,35 @@ historyList.appendChild(div)
 
 })
 
+updateStats()
+
+}
+
+
+/* MINI PAINEL */
+
+function updateStats(){
+
+let atendidas = history.length
+
+let canceladas = history.filter(
+item => item.result === "Cancelado"
+).length
+
+let taxa = 0
+
+if(atendidas > 0){
+
+taxa = (canceladas / atendidas) * 100
+
+}
+
+const totalEl = document.getElementById("statTotal")
+const rateEl = document.getElementById("statRate")
+
+if(totalEl) totalEl.textContent = atendidas
+if(rateEl) rateEl.textContent = taxa.toFixed(1) + "%"
+
 }
 
 
