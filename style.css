@@ -61,7 +61,7 @@ margin-top:20px;
 .history-item{
 padding: 8px 16px;
 margin: 10px;
-border-bottom: 4px solid red;
+border-left: 4px solid red;
 background: rgba(255, 255, 255, 0.1);
 border-radius: 12px;
 box-shadow:0 8px 20px rgba(0,0,0,0.05);
