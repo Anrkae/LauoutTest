@@ -60,7 +60,7 @@ color:white;
 }
 
 .stats-card {
-  height: 40px;
+  height: 90px;
   aspect-ratio:18/9;
   padding: auto;
   background: rgba(255, 255, 255, 0.1);
