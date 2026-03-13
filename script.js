@@ -96,8 +96,13 @@ taxa = (canceladas / atendidas) * 100
 const totalEl = document.getElementById("statTotal")
 const rateEl = document.getElementById("statRate")
 
-if(totalEl) totalEl.textContent = atendidas
-if(rateEl) rateEl.textContent = taxa.toFixed(1) + "%"
+if(totalEl){
+totalEl.textContent = "Atendidas: " + atendidas
+}
+
+if(rateEl){
+rateEl.textContent = "Taxa de desc.: " + taxa.toFixed(1) + "%"
+}
 
 }
 
