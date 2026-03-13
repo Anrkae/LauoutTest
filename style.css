@@ -73,27 +73,18 @@ margin-top:20px;
 }
 
 .stats-card{
-
 flex:1;
-
 height:90px;
 aspect-ratio:18/9;
-
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
-
 text-align:center;
-
 background:rgba(255,255,255,0.05);
-
 border-left:4px solid #ef4444;
-
 border-radius:10px;
-
 box-shadow:0 8px 20px rgba(0,0,0,0.25);
-
 transition:transform .3s ease;
 }
 
@@ -126,7 +117,7 @@ gap:10px;
 }
 
 .history-item{
-padding:12px 16px;ef4444
+padding:12px 16px;
 border-left:4px solid #ef4444;
 background:rgba(255,255,255,0.05);
 border-radius:12px;
@@ -136,7 +127,7 @@ transition:transform .25s ease;
 }
 
 .history-item:hover{
-transform:scale(1.03);
+transform:scale(1.01);
 }
 
 /* CONFIRMAÇÃO DINÂMICA */
