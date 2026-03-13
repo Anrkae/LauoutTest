@@ -15,10 +15,8 @@ async function login(){
 const input = document.getElementById("matriculaInput")
 
 if(!input.value.trim()){
-
 alert("Digite a matrícula")
 return
-
 }
 
 matricula = input.value.trim()
@@ -88,20 +86,38 @@ item => item.result === "Cancelado"
 let taxa = 0
 
 if(atendidas > 0){
-
 taxa = (canceladas / atendidas) * 100
-
 }
 
 const totalEl = document.getElementById("statTotal")
 const rateEl = document.getElementById("statRate")
 
 if(totalEl){
-totalEl.textContent = "Atendidas: " + atendidas
+totalEl.textContent = atendidas
 }
 
 if(rateEl){
-rateEl.textContent = "Taxa de desc.: " + taxa.toFixed(1) + "%"
+rateEl.textContent = taxa.toFixed(1) + "%"
+}
+
+/* COR AUTOMÁTICA DA TAXA */
+
+const rateCard = rateEl?.closest(".stats-card")
+
+if(rateCard){
+
+if(taxa > 40){
+rateCard.style.borderLeftColor = "#ef4444"
+}
+
+else if(taxa > 25){
+rateCard.style.borderLeftColor = "#f59e0b"
+}
+
+else{
+rateCard.style.borderLeftColor = "#10b981"
+}
+
 }
 
 }
@@ -130,9 +146,7 @@ history.unshift(data)
 renderHistory()
 
 if(window.salvarAtendimento){
-
 salvarAtendimento(matricula,data)
-
 }
 
 }
@@ -155,10 +169,8 @@ return `${min}:${s}`
 function confirmAction(btn,callback){
 
 if(btn.classList.contains("confirming")){
-
 callback()
 return
-
 }
 
 const original=btn.textContent
@@ -182,20 +194,16 @@ btn.textContent=original
 async function openFloatingPanel(){
 
 if(!("documentPictureInPicture" in window)){
-
 alert("Sem suporte.")
 return
-
 }
 
 if(pipWindow && !pipWindow.closed) return
 
 
 pipWindow=await window.documentPictureInPicture.requestWindow({
-
 width:320,
 height:360
-
 })
 
 
@@ -420,9 +428,7 @@ doc.getElementById("startBtn").classList.remove("hidden")
 document.addEventListener("visibilitychange",()=>{
 
 if(document.visibilityState==="hidden"){
-
 openFloatingPanel()
-
 }
 
 })
