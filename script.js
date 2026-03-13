@@ -106,16 +106,16 @@ const rateCard = rateEl?.closest(".stats-card")
 
 if(rateCard){
 
-if(taxa > 40){
-rateCard.style.borderLeftColor = "#ef4444"
-}
-
-else if(taxa > 25){
+if(taxa <= 14){
 rateCard.style.borderLeftColor = "#f59e0b"
 }
 
-else{
+else if(taxa <= 12.5){
 rateCard.style.borderLeftColor = "#10b981"
+}
+
+else{
+rateCard.style.borderLeftColor = "#ef4444"
 }
 
 }
