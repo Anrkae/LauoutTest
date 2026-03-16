@@ -3,13 +3,13 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Painel de Atendimentos</title>
+<title>Painel Atendimentos</title>
 
 <style>
 
 body{
 font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-background:#f4f6f8;
+background:#f3f4f6;
 margin:0;
 padding:30px;
 }
@@ -34,7 +34,7 @@ padding:10px 18px;
 border:none;
 border-radius:8px;
 cursor:pointer;
-background:#e0e0e0;
+background:#e5e7eb;
 font-weight:600;
 }
 
@@ -79,9 +79,11 @@ margin-top:10px;
 <h1>Painel de Retenção</h1>
 
 <div class="filters">
-<button onclick="setFiltro('dia')" id="btnDia" class="active">Diário</button>
-<button onclick="setFiltro('semana')" id="btnSemana">Semanal</button>
-<button onclick="setFiltro('mes')" id="btnMes">Mensal</button>
+
+<button id="btnDia" class="active" onclick="setFiltro('dia')">Diário</button>
+<button id="btnSemana" onclick="setFiltro('semana')">Semanal</button>
+<button id="btnMes" onclick="setFiltro('mes')">Mensal</button>
+
 </div>
 
 <div class="cards">
@@ -92,7 +94,7 @@ margin-top:10px;
 </div>
 
 <div class="card">
-<h2>Taxa de Cancelamento</h2>
+<h2>Taxa Cancelamento</h2>
 <div class="value" id="cancelamento">0%</div>
 </div>
 
@@ -108,7 +110,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
 getFirestore,
 collection,
-doc,
 getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
@@ -128,12 +129,11 @@ appId: "1:218601890292:web:31e30552518c20ff8d19a1"
 const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
 
-
-let filtroAtual = "dia"
-
+let filtro = "dia"
 
 
-function getToday(){
+
+function getTodayId(){
 
 const d = new Date()
 
@@ -160,9 +160,9 @@ return `${year}-${month}`
 
 
 
-function setFiltro(f){
+window.setFiltro = function(f){
 
-filtroAtual = f
+filtro = f
 
 document.querySelectorAll("button").forEach(b=>b.classList.remove("active"))
 
@@ -178,8 +178,8 @@ carregar()
 
 async function carregar(){
 
-let total=0
-let canceladas=0
+let total = 0
+let canceladas = 0
 
 const atendimentos = collection(db,"atendimentos")
 
@@ -188,24 +188,28 @@ const snapshot = await getDocs(atendimentos)
 const hoje = new Date()
 const mesAtual = getMesAtual()
 
+
 for(const diaDoc of snapshot.docs){
 
 const diaId = diaDoc.id
 
+
 if(!diaId.startsWith(mesAtual)) continue
 
 
-const data = new Date(diaId)
+const dataDia = new Date(diaId)
 
-if(filtroAtual==="dia"){
 
-if(diaId !== getToday()) continue
+if(filtro==="dia"){
+
+if(diaId !== getTodayId()) continue
 
 }
 
-if(filtroAtual==="semana"){
 
-const diff = (hoje - data) / (1000*60*60*24)
+if(filtro==="semana"){
+
+const diff = (hoje - dataDia)/(1000*60*60*24)
 
 if(diff > 7) continue
 
@@ -216,11 +220,13 @@ const operadores = collection(db,"atendimentos",diaId,"operadores")
 
 const operadoresSnap = await getDocs(operadores)
 
+
 for(const op of operadoresSnap.docs){
 
 const ligacoes = collection(db,"atendimentos",diaId,"operadores",op.id,"ligacoes")
 
 const ligSnap = await getDocs(ligacoes)
+
 
 ligSnap.forEach(l=>{
 
@@ -228,13 +234,14 @@ const d = l.data()
 
 total++
 
-if(d.status === "Cancelado") canceladas++
+if(d.status==="Cancelado") canceladas++
 
 })
 
 }
 
 }
+
 
 
 let taxa = 0
@@ -246,16 +253,14 @@ taxa = ((canceladas/total)*100).toFixed(1)
 }
 
 document.getElementById("total").innerText = total
-document.getElementById("cancelamento").innerText = taxa + "%"
+document.getElementById("cancelamento").innerText = taxa+"%"
 
 }
-
 
 
 carregar()
 
 </script>
-
 
 </body>
 </html>
