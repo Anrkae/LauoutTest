@@ -5,34 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Resultados - Claro Ret</title>
     <link rel="stylesheet" href="gestao.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body class="dark-theme">
     <div class="container">
         <header>
-            <h1>Consolidado de Operadores</h1>
-            <p id="currentMonthDisplay"></p>
+            <div>
+                <h1>Gestão de Operadores</h1>
+                <p id="periodLabel">Exibindo resultados de hoje</p>
+            </div>
+            <div class="filter-area">
+                <select id="periodFilter">
+                    <option value="diario">Diário (Hoje)</option>
+                    <option value="semanal">Semanal (Mês atual)</option>
+                    <option value="mensal" selected>Mensal (Mês atual)</option>
+                </select>
+            </div>
         </header>
-
-        <div class="stats-overview">
-            <div class="card">
-                <span>Total Geral (Mês)</span>
-                <h2 id="grandTotal">0</h2>
-            </div>
-            <div class="card">
-                <span>Taxa Média</span>
-                <h2 id="avgRate">0%</h2>
-            </div>
-        </div>
 
         <div class="table-container">
             <table id="resultsTable">
                 <thead>
                     <tr>
                         <th>Operador</th>
-                        <th>Diário (Hoje)</th>
-                        <th>Semanal</th>
-                        <th>Mensal</th>
-                        <th>Taxa (Mês)</th>
+                        <th>Atendidas</th>
+                        <th>Cancelamentos</th>
+                        <th>Taxa de Desconexão</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
