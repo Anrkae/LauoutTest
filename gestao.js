@@ -13,7 +13,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let dadosBrutos = []; // Armazena todas as ligações do mês
+let dadosBrutos = []; 
 
 async function carregarDados() {
     const now = new Date();
@@ -29,7 +29,6 @@ async function carregarDados() {
             const d = doc.data();
             const [dia, mes, ano] = d.date.split('/');
             
-            // Filtro de segurança: apenas mês atual
             if (parseInt(mes) === currentMonth && parseInt(ano) === currentYear) {
                 dadosBrutos.push({
                     ...d,
@@ -50,13 +49,15 @@ function processarEExibir() {
     const now = new Date();
     now.setHours(0,0,0,0);
 
-    // Cálculo do início da semana
     const startOfWeek = new Date(now);
     const day = now.getDay();
     const diff = now.getDate() - (day === 0 ? 6 : day - 1);
     startOfWeek.setDate(diff);
 
     dadosBrutos.forEach(item => {
+        // --- AJUSTE SOLICITADO: DESCONSIDERAR 021 ---
+        if (item.reason === "021") return; 
+        
         let incluir = false;
         
         if (filtro === "diario") {
@@ -65,7 +66,7 @@ function processarEExibir() {
         } else if (filtro === "semanal") {
             if (item.objetoData >= startOfWeek) incluir = true;
         } else {
-            incluir = true; // mensal (já filtrado no carregamento)
+            incluir = true; 
         }
 
         if (incluir) {
@@ -110,7 +111,6 @@ function getCorTaxa(taxa) {
     return "#ef4444";
 }
 
-// Listeners
 document.getElementById("periodFilter").addEventListener("change", () => {
     const labels = { diario: "hoje", semanal: "desta semana", mensal: "deste mês" };
     document.getElementById("periodLabel").textContent = `Exibindo resultados ${labels[document.getElementById("periodFilter").value]}`;
