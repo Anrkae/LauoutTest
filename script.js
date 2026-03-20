@@ -215,10 +215,13 @@ body{
 font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 background:white;
 margin:0;
-padding:16px;
 display:flex;
 flex-direction:column;
 gap:12px;
+}
+
+#statusTitle {
+margin: 8px;
 }
 
 .timer{
