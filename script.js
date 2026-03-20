@@ -213,8 +213,9 @@ pipWindow.document.body.innerHTML=`
 
 body{
 font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-background:white;
-margin:0;
+background: #1c1c1c;
+color: white;
+margin:2px;
 display:flex;
 flex-direction:column;
 gap:12px;
@@ -225,6 +226,7 @@ margin: 8px;
 }
 
 .timer{
+margin: 0;
 font-size:28px;
 font-weight:600;
 }
@@ -247,8 +249,11 @@ width:100%;
 select{
 width:100%;
 padding:10px;
+margin: 8px 0;
 border-radius:8px;
-border:1px solid #ddd;
+background: #1c1c1c;
+border:2px solid #2c2c2c;
+color: white;
 }
 
 .hidden{display:none;}
@@ -259,7 +264,7 @@ border:1px solid #ddd;
 
 <div id="timer" class="timer hidden">00:00</div>
 
-<button id="startBtn" class="primary">Atender</button>
+<button id="startBtn" class="primary">Iniciar</button>
 
 <button id="endBtn" class="danger hidden">Encerrar</button>
 
@@ -319,7 +324,7 @@ startBtn.onclick=()=>{
 
 seconds=0
 
-statusTitle.textContent="Em atendimento"
+statusTitle.textContent="Atendendo"
 
 startBtn.classList.add("hidden")
 timer.classList.remove("hidden")
