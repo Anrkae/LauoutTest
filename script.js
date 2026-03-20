@@ -214,7 +214,7 @@ pipWindow.document.body.innerHTML=`
 body{
 font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 background: #1c1c1c;
-color: red;
+color: white;
 margin:2px;
 display:flex;
 flex-direction:column;
